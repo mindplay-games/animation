@@ -10,13 +10,13 @@ let idleTimeline;
 let talkTimeline;
 
 function setInitialPose() {
-  gsap.set(robot, { scale: 1, y: 0, rotate: 0 });
-  gsap.set(head, { x: 0, y: 0, rotate: -2 });
-  gsap.set(body, { x: 0, y: 0, rotate: 0, scaleY: 1 });
-  gsap.set(leftHand, { x: 0, y: 0, rotate: -8 });
-  gsap.set(rightHand, { x: 0, y: 0, rotate: -5 });
-  gsap.set(leftLeg, { x: 0, y: 0, rotate: 3 });
-  gsap.set(rightLeg, { x: 0, y: 0, rotate: -4 });
+  gsap.set(robot, { scale: 1, y: 0, rotate: -7 });
+  gsap.set(head, { x: 0, y: 0, rotate: -3 });
+  gsap.set(body, { x: 0, y: 0, rotate: -2, scaleY: 1 });
+  gsap.set(leftHand, { x: 0, y: 0, rotate: -14 });
+  gsap.set(rightHand, { x: 0, y: 0, rotate: -6 });
+  gsap.set(leftLeg, { x: 0, y: 0, rotate: 19 });
+  gsap.set(rightLeg, { x: 0, y: 0, rotate: -18 });
 }
 
 function buildIdleTimeline() {
@@ -27,16 +27,16 @@ function buildIdleTimeline() {
     .to(robot, { y: 0, duration: 1.45 }, 1.45)
     .to(body, { scaleY: 1.025, y: -3, duration: 1.45 }, 0)
     .to(body, { scaleY: 1, y: 0, duration: 1.45 }, 1.45)
-    .to(head, { rotate: 2.5, y: -5, duration: 1.45 }, 0)
-    .to(head, { rotate: -2, y: 0, duration: 1.45 }, 1.45)
-    .to(leftHand, { rotate: -2, y: -4, duration: 1.45 }, 0)
-    .to(leftHand, { rotate: -8, y: 0, duration: 1.45 }, 1.45)
-    .to(rightHand, { rotate: 1, y: -5, duration: 1.45 }, 0)
-    .to(rightHand, { rotate: -5, y: 0, duration: 1.45 }, 1.45)
-    .to(leftLeg, { rotate: -1.5, x: -2, duration: 1.45 }, 0)
-    .to(leftLeg, { rotate: 3, x: 0, duration: 1.45 }, 1.45)
-    .to(rightLeg, { rotate: 1.5, x: 2, duration: 1.45 }, 0)
-    .to(rightLeg, { rotate: -4, x: 0, duration: 1.45 }, 1.45);
+    .to(head, { rotate: 1.5, y: -4, duration: 1.45 }, 0)
+    .to(head, { rotate: -3, y: 0, duration: 1.45 }, 1.45)
+    .to(leftHand, { rotate: -9, y: -3, duration: 1.45 }, 0)
+    .to(leftHand, { rotate: -14, y: 0, duration: 1.45 }, 1.45)
+    .to(rightHand, { rotate: 4, y: -4, duration: 1.45 }, 0)
+    .to(rightHand, { rotate: -6, y: 0, duration: 1.45 }, 1.45)
+    .to(leftLeg, { rotate: 15, x: -2, duration: 1.45 }, 0)
+    .to(leftLeg, { rotate: 19, x: 0, duration: 1.45 }, 1.45)
+    .to(rightLeg, { rotate: -13, x: 2, duration: 1.45 }, 0)
+    .to(rightLeg, { rotate: -18, x: 0, duration: 1.45 }, 1.45);
 
   return timeline;
 }
@@ -63,9 +63,9 @@ function wave() {
   }
 
   return gsap.timeline({ defaults: { ease: 'sine.inOut' }, onComplete: () => wasIdleActive && idleTimeline.play() })
-    .to(rightHand, { rotate: -28, y: -8, duration: 0.18 })
-    .to(rightHand, { rotate: 22, duration: 0.22, repeat: 5, yoyo: true })
-    .to(rightHand, { rotate: -5, y: 0, duration: 0.28 });
+    .to(rightHand, { rotate: -18, y: -8, duration: 0.18 })
+    .to(rightHand, { rotate: 18, duration: 0.2, repeat: 5, yoyo: true })
+    .to(rightHand, { rotate: -6, y: 0, duration: 0.28 });
 }
 
 function talkStart() {

@@ -1,8 +1,8 @@
 :root {
-  --stage-size: min(86vw, 640px);
-  --robot-width: 520px;
-  --robot-height: 620px;
-  --shadow: rgba(26, 18, 4, 0.18);
+  --stage-size: min(88vw, 520px);
+  --robot-width: 430px;
+  --robot-height: 500px;
+  --shadow: rgba(26, 18, 4, 0.08);
 }
 
 * {
@@ -14,7 +14,7 @@ body {
   margin: 0;
   display: grid;
   place-items: center;
-  overflow: hidden;
+  overflow-x: hidden;
   color: #302719;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background:
@@ -28,8 +28,8 @@ body {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 1.5rem;
-  padding: 2rem;
+  gap: 1.25rem;
+  padding: 1.5rem;
 }
 
 .robot {
@@ -37,9 +37,9 @@ body {
   width: var(--robot-width);
   height: var(--robot-height);
   max-width: var(--stage-size);
-  aspect-ratio: 520 / 620;
-  filter: drop-shadow(0 2rem 1.75rem var(--shadow));
-  transform-origin: 50% 58%;
+  aspect-ratio: 430 / 500;
+  filter: drop-shadow(0 1.25rem 1rem var(--shadow));
+  transform-origin: 50% 56%;
 }
 
 .part {
@@ -50,51 +50,52 @@ body {
   will-change: transform;
 }
 
+/* Pose tuned against the supplied reference image. */
 .head {
-  z-index: 5;
-  width: 53.65%;
-  left: 23.8%;
-  top: 1.2%;
-  transform-origin: 50% 83%;
+  z-index: 6;
+  width: 64.9%;
+  left: 25.6%;
+  top: 0.4%;
+  transform-origin: 50% 82%;
 }
 
 .body {
   z-index: 3;
-  width: 30%;
-  left: 35.9%;
-  top: 37.4%;
-  transform-origin: 50% 50%;
+  width: 36.3%;
+  left: 35.8%;
+  top: 36.6%;
+  transform-origin: 50% 48%;
 }
 
 .left-hand {
-  z-index: 2;
-  width: 23.65%;
-  left: 23.1%;
-  top: 33.7%;
-  transform-origin: 82% 18%;
+  z-index: 4;
+  width: 28.6%;
+  left: 15.6%;
+  top: 39.8%;
+  transform-origin: 80% 17%;
 }
 
 .right-hand {
-  z-index: 4;
-  width: 44.8%;
-  left: 52.2%;
-  top: 18.2%;
-  transform-origin: 18% 57%;
+  z-index: 5;
+  width: 34.8%;
+  left: 68.4%;
+  top: 23.6%;
+  transform-origin: 17% 58%;
 }
 
 .left-leg {
-  z-index: 1;
-  width: 21.35%;
-  left: 35.2%;
-  top: 59.4%;
+  z-index: 2;
+  width: 25.8%;
+  left: 25.4%;
+  top: 61.2%;
   transform-origin: 58% 8%;
 }
 
 .right-leg {
-  z-index: 1;
-  width: 27.5%;
-  left: 45.6%;
-  top: 59.8%;
+  z-index: 2;
+  width: 33.2%;
+  left: 47.2%;
+  top: 58.8%;
   transform-origin: 38% 8%;
 }
 
@@ -110,7 +111,7 @@ button {
   border-radius: 999px;
   padding: 0.7rem 1rem;
   color: #302719;
-  background: rgba(255, 248, 235, 0.8);
+  background: rgba(255, 248, 235, 0.9);
   box-shadow: 0 0.4rem 0 #302719;
   cursor: pointer;
   font-weight: 800;
