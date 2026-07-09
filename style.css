@@ -1,7 +1,7 @@
 :root {
   --stage-size: min(88vw, 520px);
-  --robot-width: 430px;
-  --robot-height: 500px;
+  --robot-width: 450px;
+  --robot-height: 560px;
   --shadow: rgba(26, 18, 4, 0.08);
 }
 
@@ -37,7 +37,7 @@ body {
   width: var(--robot-width);
   height: var(--robot-height);
   max-width: var(--stage-size);
-  aspect-ratio: 430 / 500;
+  aspect-ratio: 450 / 560;
   filter: drop-shadow(0 1.25rem 1rem var(--shadow));
   transform-origin: 50% 56%;
 }
@@ -45,58 +45,34 @@ body {
 .part {
   position: absolute;
   display: block;
+  max-width: none;
   user-select: none;
   pointer-events: none;
   will-change: transform;
 }
 
-/* Pose tuned against the supplied reference image. */
-.head {
-  z-index: 6;
-  width: 64.9%;
-  left: 25.6%;
-  top: 0.4%;
-  transform-origin: 50% 82%;
+.debug-dot {
+  position: absolute;
+  z-index: 100;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #ff1f1f;
+  box-shadow: 0 0 0 1px #7a0000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
-.body {
-  z-index: 3;
-  width: 36.3%;
-  left: 35.8%;
-  top: 36.6%;
-  transform-origin: 50% 48%;
+.debug-dot.is-selected {
+  width: 13px;
+  height: 13px;
+  background: #00e5ff;
+  box-shadow: 0 0 0 2px #111111;
 }
 
-.left-hand {
-  z-index: 4;
-  width: 28.6%;
-  left: 15.6%;
-  top: 39.8%;
-  transform-origin: 80% 17%;
-}
-
-.right-hand {
-  z-index: 5;
-  width: 34.8%;
-  left: 68.4%;
-  top: 23.6%;
-  transform-origin: 17% 58%;
-}
-
-.left-leg {
-  z-index: 2;
-  width: 25.8%;
-  left: 25.4%;
-  top: 61.2%;
-  transform-origin: 58% 8%;
-}
-
-.right-leg {
-  z-index: 2;
-  width: 33.2%;
-  left: 47.2%;
-  top: 58.8%;
-  transform-origin: 38% 8%;
+.robot.is-debugging .part {
+  outline: 1px dashed rgba(255, 31, 31, 0.45);
 }
 
 .controls {
