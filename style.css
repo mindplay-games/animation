@@ -1,8 +1,9 @@
 :root {
-  --stage-size: min(88vw, 520px);
-  --robot-width: 430px;
-  --robot-height: 500px;
-  --shadow: rgba(26, 18, 4, 0.08);
+  --stage-size: min(88vw, 560px);
+  --robot-width: 450px;
+  --robot-height: 560px;
+  --ink: #302719;
+  --shadow: rgba(26, 18, 4, 0.18);
 }
 
 * {
@@ -15,7 +16,7 @@ body {
   display: grid;
   place-items: center;
   overflow-x: hidden;
-  color: #302719;
+  color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background:
     radial-gradient(circle at 50% 42%, rgba(255, 244, 213, 0.95), rgba(255, 229, 171, 0.35) 38%, transparent 64%),
@@ -37,66 +38,18 @@ body {
   width: var(--robot-width);
   height: var(--robot-height);
   max-width: var(--stage-size);
-  aspect-ratio: 430 / 500;
-  filter: drop-shadow(0 1.25rem 1rem var(--shadow));
+  aspect-ratio: 450 / 560;
+  filter: drop-shadow(0 2rem 1.75rem var(--shadow));
   transform-origin: 50% 56%;
 }
 
-.part {
+.robot-part {
   position: absolute;
   display: block;
+  max-width: none;
   user-select: none;
   pointer-events: none;
   will-change: transform;
-}
-
-/* Pose tuned against the supplied reference image. */
-.head {
-  z-index: 6;
-  width: 64.9%;
-  left: 25.6%;
-  top: 0.4%;
-  transform-origin: 50% 82%;
-}
-
-.body {
-  z-index: 3;
-  width: 36.3%;
-  left: 35.8%;
-  top: 36.6%;
-  transform-origin: 50% 48%;
-}
-
-.left-hand {
-  z-index: 4;
-  width: 28.6%;
-  left: 15.6%;
-  top: 39.8%;
-  transform-origin: 80% 17%;
-}
-
-.right-hand {
-  z-index: 5;
-  width: 34.8%;
-  left: 68.4%;
-  top: 23.6%;
-  transform-origin: 17% 58%;
-}
-
-.left-leg {
-  z-index: 2;
-  width: 25.8%;
-  left: 25.4%;
-  top: 61.2%;
-  transform-origin: 58% 8%;
-}
-
-.right-leg {
-  z-index: 2;
-  width: 33.2%;
-  left: 47.2%;
-  top: 58.8%;
-  transform-origin: 38% 8%;
 }
 
 .controls {
@@ -107,12 +60,12 @@ body {
 }
 
 button {
-  border: 2px solid #302719;
+  border: 2px solid var(--ink);
   border-radius: 999px;
   padding: 0.7rem 1rem;
-  color: #302719;
-  background: rgba(255, 248, 235, 0.9);
-  box-shadow: 0 0.4rem 0 #302719;
+  color: var(--ink);
+  background: rgba(255, 248, 235, 0.85);
+  box-shadow: 0 0.4rem 0 var(--ink);
   cursor: pointer;
   font-weight: 800;
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
@@ -125,8 +78,104 @@ button:focus-visible {
 }
 
 button:active {
-  box-shadow: 0 0.15rem 0 #302719;
+  box-shadow: 0 0.15rem 0 var(--ink);
   transform: translateY(0.25rem);
+}
+
+.debug-panel {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1rem;
+  background: rgba(255, 248, 235, 0.96);
+  box-shadow: 0 1rem 2rem rgba(26, 18, 4, 0.22);
+}
+
+.debug-panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.debug-panel label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.debug-panel select,
+.debug-panel input {
+  width: 100%;
+  border: 1px solid var(--ink);
+  border-radius: 0.45rem;
+  padding: 0.4rem;
+  font: inherit;
+  background: #ffffff;
+}
+
+.debug-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0.85rem 0;
+}
+
+.debug-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.debug-actions button {
+  padding: 0.55rem 0.6rem;
+  box-shadow: 0 0.2rem 0 var(--ink);
+  font-size: 0.78rem;
+}
+
+.debug-help {
+  margin: 0.8rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.origin-dot {
+  position: absolute;
+  z-index: 900;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #ff1f1f;
+  box-shadow: 0 0 0 1px #7a0000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.origin-dot.is-selected {
+  width: 13px;
+  height: 13px;
+  background: #00e5ff;
+  box-shadow: 0 0 0 2px #111111;
+}
+
+.debug-selected {
+  outline: 2px dashed #ff1f1f;
+  outline-offset: 4px;
+}
+
+@media (max-width: 760px) {
+  .debug-panel {
+    position: static;
+    width: min(100%, 450px);
+    max-height: none;
+    margin: 0 auto 1rem;
+  }
 }
 
 @media (max-width: 520px) {
