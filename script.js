@@ -1,4 +1,4 @@
-const DEBUG_ROBOT = true;
+const DEBUG_ROBOT = false;
 
 const ROBOT_CONFIG = {
   robot: {
