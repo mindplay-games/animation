@@ -188,3 +188,231 @@ button:active {
     max-width: 18rem;
   }
 }
+
+body.animation-editor-enabled .debug-panel {
+  left: 1rem;
+  right: auto;
+}
+
+.animation-editor {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1100;
+  width: min(430px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 0.85rem;
+  border: 2px solid var(--ink);
+  border-radius: 1rem;
+  background: rgba(255, 248, 235, 0.97);
+  box-shadow: 0 1rem 2rem rgba(26, 18, 4, 0.25);
+  font-size: 0.82rem;
+}
+
+.animation-editor.is-collapsed .animation-editor__body {
+  display: none;
+}
+
+.animation-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.animation-editor h2,
+.animation-editor h3 {
+  margin: 0;
+}
+
+.animation-editor h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.86rem;
+}
+
+.editor-section {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid rgba(48, 39, 25, 0.25);
+}
+
+.editor-section label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 800;
+}
+
+.animation-editor input,
+.animation-editor select,
+.animation-editor textarea {
+  width: 100%;
+  border: 1px solid var(--ink);
+  border-radius: 0.4rem;
+  padding: 0.34rem;
+  font: inherit;
+  background: #fff;
+}
+
+.animation-editor textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.editor-grid--buttons button,
+.animation-editor__header button {
+  padding: 0.45rem 0.5rem;
+  box-shadow: 0 0.18rem 0 var(--ink);
+  font-size: 0.72rem;
+}
+
+.editor-check {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  display: grid;
+}
+
+.editor-check input {
+  width: auto;
+}
+
+.timeline {
+  position: relative;
+  height: 4rem;
+  border: 1px solid var(--ink);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+}
+
+.timeline-ruler,
+.timeline-markers,
+.timeline-playhead {
+  position: absolute;
+  inset: 0;
+}
+
+.timeline-ruler span {
+  position: absolute;
+  top: 0.2rem;
+  font-size: 0.65rem;
+  transform: translateX(-50%);
+}
+
+.timeline-ruler span::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 2.6rem;
+  margin: 0.15rem auto 0;
+  background: rgba(48, 39, 25, 0.25);
+}
+
+.timeline-playhead {
+  width: 2px;
+  background: #111;
+  transform: translateX(-1px);
+  pointer-events: none;
+}
+
+.timeline-marker {
+  position: absolute;
+  top: 2.2rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #ff9f00;
+  box-shadow: 0 0 0 1px var(--ink);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+}
+
+.timeline-marker.is-selected,
+.keyframe-item.is-selected {
+  background: #00e5ff;
+}
+
+.transform-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.transform-fields label {
+  gap: 0.2rem;
+}
+
+.keyframe-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 12rem;
+  overflow: auto;
+}
+
+.keyframe-group {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.keyframe-item {
+  padding: 0.35rem;
+  text-align: left;
+  box-shadow: none;
+  font-size: 0.72rem;
+}
+
+.empty-state,
+.timeline-readout {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.recording-indicator {
+  display: none;
+  color: #d40000;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.recording-indicator.is-recording {
+  display: inline;
+}
+
+.animation-selected {
+  outline: 2px dashed #005eff;
+  outline-offset: 6px;
+}
+
+.onion-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 800;
+}
+
+.onion-clone {
+  pointer-events: none;
+  filter: grayscale(1) hue-rotate(150deg);
+}
+
+@media (max-width: 980px) {
+  body.animation-editor-enabled .debug-panel,
+  .animation-editor {
+    position: static;
+    width: min(100%, 450px);
+    max-height: none;
+    margin: 1rem auto;
+  }
+}
