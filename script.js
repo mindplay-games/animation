@@ -1303,6 +1303,13 @@ function handleAnimationEditorKeyboard(event) {
   const moveAmount = event.shiftKey ? 10 : 1;
   const timeAmount = event.shiftKey ? 0.5 : 0.05;
   const rotateAmount = event.shiftKey ? 5 : 1;
+  if (event.key === 'Enter') {
+    const keyframeElement = document.activeElement?.closest?.('[data-keyframe-id]');
+    if (keyframeElement) {
+      event.preventDefault();
+      return selectKeyframe(keyframeElement.dataset.keyframeId);
+    }
+  }
   const actions = {
     ' ': () => (editorIsPlaying ? pauseEditorAnimation() : playEditorAnimation()),
     ArrowLeft: () => previewAtTime(editorCurrentTime - timeAmount),
@@ -1349,6 +1356,613 @@ function bindTimelinePointer() {
   });
 }
 
+
+// ==================================================
+// UX upgrade: scroll-safe editor, resizable panel, track timeline
+// ==================================================
+const ANIMATION_EDITOR_WIDTH_KEY = 'robotAnimationEditorWidth';
+const MIN_EDITOR_WIDTH = 420;
+const MAX_EDITOR_WIDTH = 720;
+let editorTrackFilter = 'all';
+let editorSnap = 0;
+let lastEditorScrollState = null;
+let cachedTimelineDrag = null;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getPixelsPerSecond() {
+  return 160 * editorZoom;
+}
+
+function getVisibleParts() {
+  if (editorTrackFilter === 'selected') return [editorSelectedPart];
+  if (editorTrackFilter === 'nonempty') {
+    const partsWithKeys = new Set(getCurrentAnimation().keyframes.map((keyframe) => keyframe.part));
+    return PART_NAMES.filter((partName) => partsWithKeys.has(partName));
+  }
+  return PART_NAMES;
+}
+
+function snapTime(time) {
+  if (!editorSnap) return Number(time.toFixed(3));
+  return Number((Math.round(time / editorSnap) * editorSnap).toFixed(3));
+}
+
+function saveEditorScrollState() {
+  return {
+    panelScrollTop: animationEditor?.scrollTop || 0,
+    keyframeListScrollTop: animationPanelBody?.querySelector('[data-editor="keyframeList"]')?.scrollTop || 0,
+    timelineScrollLeft: animationPanelBody?.querySelector('[data-editor="timelineScroll"]')?.scrollLeft || 0,
+  };
+}
+
+function restoreEditorScrollState(state = lastEditorScrollState) {
+  if (!state) return;
+  requestAnimationFrame(() => {
+    if (animationEditor) animationEditor.scrollTop = state.panelScrollTop;
+    const keyframeList = animationPanelBody?.querySelector('[data-editor="keyframeList"]');
+    const timelineScroll = animationPanelBody?.querySelector('[data-editor="timelineScroll"]');
+    if (keyframeList) keyframeList.scrollTop = state.keyframeListScrollTop;
+    if (timelineScroll) timelineScroll.scrollLeft = state.timelineScrollLeft;
+  });
+}
+
+function withEditorScrollPreserved(callback) {
+  lastEditorScrollState = saveEditorScrollState();
+  callback();
+  restoreEditorScrollState(lastEditorScrollState);
+}
+
+function setEditorWidth(width) {
+  const nextWidth = clamp(width, MIN_EDITOR_WIDTH, MAX_EDITOR_WIDTH);
+  document.documentElement.style.setProperty('--animation-editor-width', `${nextWidth}px`);
+  localStorage.setItem(ANIMATION_EDITOR_WIDTH_KEY, String(nextWidth));
+}
+
+function installEditorResizeHandle() {
+  const handle = animationEditor.querySelector('[data-editor-resize]');
+  if (!handle) return;
+  handle.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    handle.setPointerCapture(event.pointerId);
+    const move = (moveEvent) => setEditorWidth(window.innerWidth - moveEvent.clientX - 16);
+    const up = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', up);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up);
+  });
+}
+
+function createAnimationEditor() {
+  document.body.classList.add('animation-editor-enabled');
+  const savedWidth = Number(localStorage.getItem(ANIMATION_EDITOR_WIDTH_KEY));
+  if (savedWidth) setEditorWidth(savedWidth);
+  animationEditor = document.createElement('aside');
+  animationEditor.className = 'animation-editor';
+  animationEditor.setAttribute('aria-label', 'Animation editor');
+  animationEditor.innerHTML = `
+    <div class="animation-editor__resize" data-editor-resize aria-hidden="true"></div>
+    <div class="animation-editor__header">
+      <h2>Animation Editor</h2>
+      <button type="button" data-editor-action="togglePanel" aria-label="Hide or show animation editor body">Hide</button>
+    </div>
+    <div class="animation-editor__body"></div>
+  `;
+  document.body.appendChild(animationEditor);
+  animationPanelBody = animationEditor.querySelector('.animation-editor__body');
+  animationEditor.addEventListener('click', handleAnimationEditorClick);
+  animationEditor.addEventListener('input', handleAnimationEditorInput);
+  animationEditor.addEventListener('change', handleAnimationEditorChange);
+  window.addEventListener('keydown', handleAnimationEditorKeyboard);
+  window.addEventListener('resize', () => withEditorScrollPreserved(() => {
+    renderTimelineRuler();
+    renderTimelineMarkers();
+    updatePlayhead();
+  }));
+  onionLayer.className = 'onion-layer';
+  robot.appendChild(onionLayer);
+  installEditorResizeHandle();
+  renderAnimationEditor();
+}
+
+function sectionMarkup(title, id, content, open = false, extraClass = '') {
+  return `<details class="editor-section ${extraClass}" data-editor-section="${id}" ${open ? 'open' : ''}>
+    <summary>${title}</summary>
+    <div class="editor-section__content">${content}</div>
+  </details>`;
+}
+
+function renderAnimationEditor() {
+  const state = saveEditorScrollState();
+  const animation = getCurrentAnimation();
+  animationPanelBody.innerHTML = `
+    ${sectionMarkup('Animation', 'animation', `
+      <span class="recording-indicator ${editorRecordMode ? 'is-recording' : ''}">RECORDING</span>
+      <label>Animation
+        <select data-editor="animationSelect">
+          ${Object.entries(ANIMATION_DATA).map(([key, data]) => `<option value="${key}" ${key === selectedAnimationKey ? 'selected' : ''}>${data.name || key}</option>`).join('')}
+        </select>
+      </label>
+      <div class="editor-grid editor-grid--buttons">
+        <button type="button" data-editor-action="newAnimation">New Animation</button>
+        <button type="button" data-editor-action="renameAnimation">Rename Animation</button>
+        <button type="button" data-editor-action="deleteAnimation">Delete Animation</button>
+        <button type="button" data-editor-action="duplicateAnimation">Duplicate Animation</button>
+      </div>
+    `, true)}
+    ${sectionMarkup('Timeline', 'timeline', `
+      <div class="timeline-readout"><span data-editor="timeDisplay">${editorCurrentTime.toFixed(2)}s</span> / ${animation.duration.toFixed(2)}s</div>
+      <div class="editor-grid editor-grid--timeline-controls">
+        <label>Duration <input type="number" step="0.1" min="0.1" value="${animation.duration}" data-editor="duration" /></label>
+        <label>Zoom <input type="range" min="0.5" max="8" step="0.25" value="${editorZoom}" data-editor="zoom" /></label>
+        <label>Tracks
+          <select data-editor="trackFilter">
+            <option value="all" ${editorTrackFilter === 'all' ? 'selected' : ''}>Show all tracks</option>
+            <option value="selected" ${editorTrackFilter === 'selected' ? 'selected' : ''}>Show selected part only</option>
+            <option value="nonempty" ${editorTrackFilter === 'nonempty' ? 'selected' : ''}>Hide empty tracks</option>
+          </select>
+        </label>
+        <label>Snap
+          <select data-editor="snap">
+            ${[0, 0.01, 0.05, 0.1, 0.25, 0.5].map((value) => `<option value="${value}" ${Number(editorSnap) === value ? 'selected' : ''}>${value ? `${value}s` : 'Off'}</option>`).join('')}
+          </select>
+        </label>
+        <label class="editor-check"><input type="checkbox" ${animation.loop ? 'checked' : ''} data-editor="loop" /> Loop</label>
+      </div>
+      <div class="editor-grid editor-grid--buttons">
+        <button type="button" data-editor-action="zoomOut">Zoom out</button>
+        <button type="button" data-editor-action="zoomIn">Zoom in</button>
+        <button type="button" data-editor-action="fitTimeline">Fit animation</button>
+        <button type="button" data-editor-action="play">Play</button>
+        <button type="button" data-editor-action="pause">Pause</button>
+        <button type="button" data-editor-action="stop">Stop</button>
+      </div>
+      <div class="timeline-board" data-editor="timeline">
+        <div class="timeline-labels" data-editor="timelineLabels"></div>
+        <div class="timeline-scroll" data-editor="timelineScroll">
+          <div class="timeline-canvas" data-editor="timelineCanvas">
+            <div class="timeline-ruler" data-editor="ruler"></div>
+            <div class="timeline-tracks" data-editor="tracks"></div>
+            <div class="timeline-playhead" data-editor="playhead"><span data-editor="playheadTime">0.00s</span></div>
+          </div>
+        </div>
+      </div>
+    `, true, 'editor-section--timeline')}
+    ${sectionMarkup('Part', 'part', `
+      <label>Selected part
+        <select data-editor="partSelect">
+          ${PART_NAMES.map((partName) => `<option value="${partName}" ${partName === editorSelectedPart ? 'selected' : ''}>${partName}</option>`).join('')}
+        </select>
+      </label>
+    `, false)}
+    ${sectionMarkup('Transform', 'transform', `
+      <label>Ease
+        <select data-editor="ease">
+          ${EASE_OPTIONS.map((ease) => `<option value="${ease}">${ease}</option>`).join('')}
+        </select>
+      </label>
+      <div class="transform-fields" data-editor="transformFields"></div>
+    `, false)}
+    ${sectionMarkup('Keyframes', 'keyframes', `
+      <div class="editor-grid editor-grid--buttons">
+        <button type="button" data-editor-action="addKeyframe">Add Keyframe</button>
+        <button type="button" data-editor-action="updateKeyframe">Update Keyframe</button>
+        <button type="button" data-editor-action="deleteKeyframe">Delete Keyframe</button>
+        <button type="button" data-editor-action="copyKeyframe">Copy Keyframe</button>
+        <button type="button" data-editor-action="pasteKeyframe">Paste Keyframe</button>
+      </div>
+      <div class="keyframe-list" data-editor="keyframeList"></div>
+    `, false)}
+    ${sectionMarkup('Preview', 'preview', `
+      <label class="editor-check"><input type="checkbox" ${editorRecordMode ? 'checked' : ''} data-editor="record" /> Record Mode</label>
+      <label class="editor-check"><input type="checkbox" ${editorOnionSkin ? 'checked' : ''} data-editor="onion" /> Onion Skin</label>
+      <div class="editor-grid editor-grid--buttons">
+        <button type="button" data-editor-action="resetPart">Reset Current Part to Base Pose</button>
+        <button type="button" data-editor-action="resetFrame">Reset Entire Frame to Base Pose</button>
+        <button type="button" data-editor-action="clearAnimation">Clear Current Animation</button>
+      </div>
+    `, false)}
+    ${sectionMarkup('Import / Export', 'export', `
+      <div class="editor-grid editor-grid--buttons">
+        <button type="button" data-editor-action="copyJson">Copy Animation JSON</button>
+        <button type="button" data-editor-action="copyGsap">Copy GSAP Code</button>
+        <button type="button" data-editor-action="downloadJson">Download Animation JSON</button>
+        <button type="button" data-editor-action="importJson">Import Animation JSON</button>
+        <button type="button" data-editor-action="clearSaved">Clear Saved Animation Data</button>
+      </div>
+      <textarea data-editor="importText" placeholder="Paste animation JSON here to import"></textarea>
+    `, false)}
+  `;
+  renderTransformControls();
+  renderTimelineRuler();
+  renderTimelineMarkers();
+  renderKeyframeList();
+  updatePlayhead();
+  updateSelectedHighlightForEditor();
+  restoreEditorScrollState(state);
+}
+
+function getTimelineMetrics() {
+  const animation = getCurrentAnimation();
+  const scroll = animationPanelBody?.querySelector('[data-editor="timelineScroll"]');
+  const visibleWidth = scroll?.clientWidth || 1;
+  const pixelsPerSecond = getPixelsPerSecond();
+  const timelineWidth = Math.max(visibleWidth, animation.duration * pixelsPerSecond);
+  return { animation, scroll, visibleWidth, pixelsPerSecond, timelineWidth };
+}
+
+function timeToPixel(time) {
+  return time * getPixelsPerSecond();
+}
+
+function pixelToTime(pixel) {
+  return snapTime(pixel / getPixelsPerSecond());
+}
+
+function renderTimelineRuler() {
+  const labels = animationPanelBody.querySelector('[data-editor="timelineLabels"]');
+  const ruler = animationPanelBody.querySelector('[data-editor="ruler"]');
+  const canvas = animationPanelBody.querySelector('[data-editor="timelineCanvas"]');
+  const tracks = animationPanelBody.querySelector('[data-editor="tracks"]');
+  if (!ruler || !canvas || !tracks || !labels) return;
+  const { animation, timelineWidth, pixelsPerSecond } = getTimelineMetrics();
+  const visibleParts = getVisibleParts();
+  canvas.style.width = `${timelineWidth}px`;
+  labels.innerHTML = `<div class="timeline-label-spacer">Part</div>${visibleParts.map((partName) => `<div class="timeline-label-row">${partName}</div>`).join('')}`;
+  const majorStep = 0.5;
+  const minorStep = 0.1;
+  const fragment = document.createDocumentFragment();
+  for (let time = 0; time <= animation.duration + 0.0001; time += minorStep) {
+    const tick = document.createElement('span');
+    const isMajor = Math.abs((time / majorStep) - Math.round(time / majorStep)) < 0.001;
+    tick.className = `timeline-tick ${isMajor ? 'is-major' : 'is-minor'}`;
+    tick.style.left = `${time * pixelsPerSecond}px`;
+    if (isMajor) tick.textContent = time.toFixed(1);
+    fragment.appendChild(tick);
+  }
+  ruler.replaceChildren(fragment);
+}
+
+function renderTimelineMarkers() {
+  if (!animationPanelBody) return;
+  const tracks = animationPanelBody.querySelector('[data-editor="tracks"]');
+  if (!tracks) return;
+  const { animation, timelineWidth, pixelsPerSecond } = getTimelineMetrics();
+  const visibleParts = getVisibleParts();
+  const fragment = document.createDocumentFragment();
+  tracks.style.width = `${timelineWidth}px`;
+  visibleParts.forEach((partName, rowIndex) => {
+    const row = document.createElement('div');
+    row.className = 'timeline-track';
+    row.dataset.part = partName;
+    const keys = animation.keyframes.filter((keyframe) => keyframe.part === partName).sort((a, b) => a.time - b.time);
+    let previousLeft = -Infinity;
+    let stagger = 0;
+    keys.forEach((keyframe) => {
+      const left = keyframe.time * pixelsPerSecond;
+      stagger = left - previousLeft < 10 ? stagger + 1 : 0;
+      previousLeft = left;
+      const marker = document.createElement('button');
+      marker.type = 'button';
+      marker.className = `timeline-keyframe ${keyframe.id === selectedKeyframeId ? 'is-selected' : ''}`;
+      marker.dataset.keyframeId = keyframe.id;
+      marker.style.left = `${left}px`;
+      marker.style.top = `${50 + ((stagger % 3) - 1) * 11}%`;
+      marker.title = `${keyframe.time.toFixed(2)}s · ${keyframe.part} · ${keyframe.ease}`;
+      marker.setAttribute('aria-label', `Select ${keyframe.part} keyframe at ${keyframe.time.toFixed(2)} seconds using ${keyframe.ease}`);
+      fragment.appendChild(row).appendChild(marker);
+    });
+    if (!keys.length) fragment.appendChild(row);
+  });
+  tracks.replaceChildren(fragment);
+}
+
+function updatePlayhead() {
+  if (!animationPanelBody) return;
+  const playhead = animationPanelBody.querySelector('[data-editor="playhead"]');
+  const handleTime = animationPanelBody.querySelector('[data-editor="playheadTime"]');
+  const timeDisplay = animationPanelBody.querySelector('[data-editor="timeDisplay"]');
+  const x = timeToPixel(editorCurrentTime);
+  if (playhead) playhead.style.transform = `translateX(${x}px)`;
+  if (handleTime) handleTime.textContent = `${editorCurrentTime.toFixed(2)}s`;
+  if (timeDisplay) timeDisplay.textContent = `${editorCurrentTime.toFixed(2)}s`;
+}
+
+function updateKeyframeSelectionClasses() {
+  animationPanelBody?.querySelectorAll('[data-keyframe-id]').forEach((element) => {
+    element.classList.toggle('is-selected', element.dataset.keyframeId === selectedKeyframeId);
+    element.setAttribute('aria-pressed', String(element.dataset.keyframeId === selectedKeyframeId));
+  });
+}
+
+function summarizeKeyframeValues(keyframe) {
+  return Object.entries(keyframe.values)
+    .filter(([field, value]) => Number(value) !== Number(getBaseTransform(keyframe.part)[field]))
+    .map(([field]) => field)
+    .slice(0, 5)
+    .join(', ') || 'base pose';
+}
+
+function renderKeyframeList() {
+  const list = animationPanelBody.querySelector('[data-editor="keyframeList"]');
+  if (!list) return;
+  const state = saveEditorScrollState();
+  const fragment = document.createDocumentFragment();
+  PART_NAMES.forEach((partName) => {
+    const keyframes = getCurrentAnimation().keyframes.filter((keyframe) => keyframe.part === partName).sort((a, b) => a.time - b.time);
+    if (!keyframes.length) return;
+    const group = document.createElement('div');
+    group.className = 'keyframe-group';
+    group.innerHTML = `<div class="keyframe-group-header">${partName}</div>`;
+    keyframes.forEach((keyframe) => {
+      const row = document.createElement('div');
+      row.className = `keyframe-row ${keyframe.id === selectedKeyframeId ? 'is-selected' : ''}`;
+      row.dataset.keyframeId = keyframe.id;
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+      row.innerHTML = `
+        <span class="keyframe-selected-dot" aria-hidden="true"></span>
+        <span>${keyframe.time.toFixed(2)}s</span>
+        <span>${keyframe.part}</span>
+        <span>${keyframe.ease}</span>
+        <span class="keyframe-summary">${summarizeKeyframeValues(keyframe)}</span>
+        <button type="button" data-keyframe-edit="${keyframe.id}" aria-label="Edit keyframe at ${keyframe.time.toFixed(2)} seconds">✎</button>
+        <button type="button" data-keyframe-delete="${keyframe.id}" aria-label="Delete keyframe at ${keyframe.time.toFixed(2)} seconds">×</button>
+      `;
+      group.appendChild(row);
+    });
+    fragment.appendChild(group);
+  });
+  if (!fragment.childNodes.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'No keyframes yet.';
+    fragment.appendChild(empty);
+  }
+  list.replaceChildren(fragment);
+  restoreEditorScrollState(state);
+}
+
+function selectKeyframe(keyframeId, options = {}) {
+  const state = saveEditorScrollState();
+  const keyframe = getCurrentAnimation().keyframes.find((item) => item.id === keyframeId);
+  if (!keyframe) return;
+  selectedKeyframeId = keyframeId;
+  editorCurrentTime = keyframe.time;
+  editorSelectedPart = keyframe.part;
+  setPartValues(editorSelectedPart, keyframe.values);
+  const partSelect = animationPanelBody.querySelector('[data-editor="partSelect"]');
+  if (partSelect) partSelect.value = editorSelectedPart;
+  const easeSelect = animationPanelBody.querySelector('[data-editor="ease"]');
+  if (easeSelect) easeSelect.value = keyframe.ease;
+  refreshEditorTransformInputs();
+  updatePlayhead();
+  updateSelectedHighlightForEditor();
+  updateKeyframeSelectionClasses();
+  if (options.preview !== false) previewAtTime(editorCurrentTime);
+  restoreEditorScrollState(state);
+}
+
+function fitTimelineToAnimation() {
+  const state = saveEditorScrollState();
+  const scroll = animationPanelBody.querySelector('[data-editor="timelineScroll"]');
+  if (!scroll) return;
+  editorZoom = clamp(scroll.clientWidth / (getCurrentAnimation().duration * 160), 0.5, 8);
+  const zoomInput = animationPanelBody.querySelector('[data-editor="zoom"]');
+  if (zoomInput) zoomInput.value = editorZoom;
+  renderTimelineRuler();
+  renderTimelineMarkers();
+  updatePlayhead();
+  restoreEditorScrollState(state);
+}
+
+function zoomTimeline(direction) {
+  const state = saveEditorScrollState();
+  const scroll = animationPanelBody.querySelector('[data-editor="timelineScroll"]');
+  const oldPixels = timeToPixel(editorCurrentTime);
+  editorZoom = clamp(editorZoom + direction * 0.25, 0.5, 8);
+  const zoomInput = animationPanelBody.querySelector('[data-editor="zoom"]');
+  if (zoomInput) zoomInput.value = editorZoom;
+  renderTimelineRuler();
+  renderTimelineMarkers();
+  updatePlayhead();
+  if (scroll) scroll.scrollLeft = Math.max(0, timeToPixel(editorCurrentTime) - (oldPixels - state.timelineScrollLeft));
+}
+
+function setTimelineTimeFromPointer(event) {
+  const scroll = animationPanelBody.querySelector('[data-editor="timelineScroll"]');
+  if (!scroll) return;
+  const rect = cachedTimelineDrag?.rect || scroll.getBoundingClientRect();
+  const left = event.clientX - rect.left + scroll.scrollLeft;
+  previewAtTime(clamp(pixelToTime(left), 0, getCurrentAnimation().duration));
+}
+
+function handleMarkerDrag(marker, pointerDownEvent) {
+  pointerDownEvent.preventDefault();
+  pointerDownEvent.stopPropagation();
+  marker.setPointerCapture?.(pointerDownEvent.pointerId);
+  const keyframe = getCurrentAnimation().keyframes.find((item) => item.id === marker.dataset.keyframeId);
+  const scroll = animationPanelBody.querySelector('[data-editor="timelineScroll"]');
+  cachedTimelineDrag = { rect: scroll.getBoundingClientRect() };
+  const move = (event) => {
+    const left = event.clientX - cachedTimelineDrag.rect.left + scroll.scrollLeft;
+    keyframe.time = clamp(pixelToTime(left), 0, getCurrentAnimation().duration);
+    selectedKeyframeId = keyframe.id;
+    editorCurrentTime = keyframe.time;
+    sortKeyframes(getCurrentAnimation());
+    renderTimelineMarkers();
+    renderKeyframeList();
+    updatePlayhead();
+  };
+  const up = () => {
+    cachedTimelineDrag = null;
+    saveAnimationData();
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+  };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+}
+
+function handleAnimationEditorClick(event) {
+  const keyframeDelete = event.target.closest('[data-keyframe-delete]');
+  const keyframeEdit = event.target.closest('[data-keyframe-edit]');
+  const marker = event.target.closest('.timeline-keyframe');
+  const row = event.target.closest('.keyframe-row');
+  if (keyframeDelete) {
+    selectedKeyframeId = keyframeDelete.dataset.keyframeDelete;
+    deleteSelectedKeyframe();
+    return;
+  }
+  if (keyframeEdit) return selectKeyframe(keyframeEdit.dataset.keyframeEdit);
+  if (marker) return selectKeyframe(marker.dataset.keyframeId);
+  if (row) return selectKeyframe(row.dataset.keyframeId);
+
+  const actionButton = event.target.closest('[data-editor-action]');
+  if (!actionButton) return;
+  const actions = {
+    togglePanel: () => animationEditor.classList.toggle('is-collapsed'),
+    newAnimation: () => {
+      const name = prompt('Animation name?', 'New Animation');
+      if (!name) return;
+      const key = makeAnimationKey(name);
+      ANIMATION_DATA[key] = { name, duration: 2, loop: false, keyframes: [] };
+      selectedAnimationKey = key;
+      saveAnimationData();
+      renderAnimationEditor();
+    },
+    renameAnimation: () => {
+      const name = prompt('New animation name?', getCurrentAnimation().name);
+      if (!name) return;
+      getCurrentAnimation().name = name;
+      saveAnimationData();
+      renderAnimationEditor();
+    },
+    deleteAnimation: () => {
+      if (Object.keys(ANIMATION_DATA).length <= 1 || !confirm('Delete this animation?')) return;
+      delete ANIMATION_DATA[selectedAnimationKey];
+      selectedAnimationKey = Object.keys(ANIMATION_DATA)[0];
+      saveAnimationData();
+      renderAnimationEditor();
+    },
+    duplicateAnimation: () => {
+      const source = structuredClone(getCurrentAnimation());
+      source.name = `${source.name} Copy`;
+      const key = makeAnimationKey(source.name);
+      ANIMATION_DATA[key] = source;
+      selectedAnimationKey = key;
+      saveAnimationData();
+      renderAnimationEditor();
+    },
+    play: playEditorAnimation,
+    pause: pauseEditorAnimation,
+    stop: stopEditorAnimation,
+    zoomOut: () => zoomTimeline(-1),
+    zoomIn: () => zoomTimeline(1),
+    fitTimeline: fitTimelineToAnimation,
+    addKeyframe: upsertKeyframe,
+    updateKeyframe: updateSelectedKeyframe,
+    deleteKeyframe: deleteSelectedKeyframe,
+    copyKeyframe: copySelectedKeyframe,
+    pasteKeyframe,
+    resetPart: resetCurrentPartToBase,
+    resetFrame: resetEntireFrameToBase,
+    clearAnimation: clearCurrentAnimation,
+    copyJson: () => copyText(formatAnimationJson()),
+    copyGsap: () => copyText(buildGsapCode()),
+    downloadJson: downloadAnimationJson,
+    importJson: importAnimationJson,
+    clearSaved: clearSavedAnimationData,
+  };
+  actions[actionButton.dataset.editorAction]?.();
+}
+
+function handleAnimationEditorChange(event) {
+  const target = event.target;
+  if (target.matches('[data-editor="animationSelect"]')) {
+    selectedAnimationKey = target.value;
+    editorCurrentTime = 0;
+    selectedKeyframeId = null;
+    renderAnimationEditor();
+    previewAtTime(0);
+  }
+  if (target.matches('[data-editor="partSelect"]')) {
+    editorSelectedPart = target.value;
+    withEditorScrollPreserved(() => {
+      renderTransformControls();
+      updateSelectedHighlightForEditor();
+      renderTimelineRuler();
+      renderTimelineMarkers();
+      renderOnionSkin();
+    });
+  }
+  if (target.matches('[data-editor="duration"]')) {
+    const state = saveEditorScrollState();
+    getCurrentAnimation().duration = Math.max(0.1, Number(target.value));
+    editorCurrentTime = clamp(editorCurrentTime, 0, getCurrentAnimation().duration);
+    saveAnimationData();
+    renderTimelineRuler();
+    renderTimelineMarkers();
+    updatePlayhead();
+    restoreEditorScrollState(state);
+  }
+  if (target.matches('[data-editor="zoom"]')) {
+    const state = saveEditorScrollState();
+    editorZoom = Number(target.value);
+    renderTimelineRuler();
+    renderTimelineMarkers();
+    updatePlayhead();
+    restoreEditorScrollState(state);
+  }
+  if (target.matches('[data-editor="trackFilter"]')) {
+    editorTrackFilter = target.value;
+    withEditorScrollPreserved(() => {
+      renderTimelineRuler();
+      renderTimelineMarkers();
+      updatePlayhead();
+    });
+  }
+  if (target.matches('[data-editor="snap"]')) editorSnap = Number(target.value);
+  if (target.matches('[data-editor="loop"]')) {
+    getCurrentAnimation().loop = target.checked;
+    saveAnimationData();
+  }
+  if (target.matches('[data-editor="record"]')) {
+    editorRecordMode = target.checked;
+    const indicator = animationPanelBody.querySelector('.recording-indicator');
+    indicator?.classList.toggle('is-recording', editorRecordMode);
+  }
+  if (target.matches('[data-editor="onion"]')) {
+    editorOnionSkin = target.checked;
+    renderOnionSkin();
+  }
+}
+
+function bindTimelinePointer() {
+  animationEditor.addEventListener('pointerdown', (event) => {
+    const marker = event.target.closest('.timeline-keyframe');
+    if (marker) return handleMarkerDrag(marker, event);
+    const scroll = event.target.closest('[data-editor="timelineScroll"]');
+    if (!scroll) return;
+    pauseEditorAnimation();
+    cachedTimelineDrag = { rect: scroll.getBoundingClientRect() };
+    setTimelineTimeFromPointer(event);
+    const move = (moveEvent) => setTimelineTimeFromPointer(moveEvent);
+    const up = () => {
+      cachedTimelineDrag = null;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+}
+
+animationEditor?.remove();
 if (ANIMATION_EDITOR_ENABLED) {
   pauseAnimations();
   syncEditorValuesFromBase();
