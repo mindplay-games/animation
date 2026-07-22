@@ -1,5 +1,5 @@
-const DEBUG_ROBOT = true;
-const ANIMATION_EDITOR_ENABLED = true;
+const DEBUG_ROBOT = false;
+const ANIMATION_EDITOR_ENABLED = false;
 
 const ROBOT_CONFIG = {
   robot: {
@@ -129,6 +129,7 @@ const originDots = new Map();
 
 let selectedPart = 'head';
 let idleTimeline;
+let inspiredTimeline;
 let talkTimeline;
 let debugPanel;
 
@@ -206,46 +207,96 @@ function buildIdleTimeline() {
   const timeline = gsap.timeline({ repeat: -1, defaults: { ease: 'sine.inOut' } });
 
   timeline
-    .to(robot, { y: base('robot').y - 8, duration: 1.45 }, 0)
-    .to(robot, { y: base('robot').y, duration: 1.45 }, 1.45)
-    .to(partElements.body, { scaleY: base('body').scaleY + 0.025, y: base('body').y - 3, duration: 1.45 }, 0)
-    .to(partElements.body, { scaleY: base('body').scaleY, y: base('body').y, duration: 1.45 }, 1.45)
-    .to(partElements.head, { rotate: base('head').rotate + 4.5, y: base('head').y - 4, duration: 1.45 }, 0)
-    .to(partElements.head, { rotate: base('head').rotate, y: base('head').y, duration: 1.45 }, 1.45)
-    .to(partElements.leftHand, { rotate: base('leftHand').rotate + 5, y: base('leftHand').y - 3, duration: 1.45 }, 0)
-    .to(partElements.leftHand, { rotate: base('leftHand').rotate, y: base('leftHand').y, duration: 1.45 }, 1.45)
-    .to(partElements.rightHand, { rotate: base('rightHand').rotate + 10, y: base('rightHand').y - 4, duration: 1.45 }, 0)
-    .to(partElements.rightHand, { rotate: base('rightHand').rotate, y: base('rightHand').y, duration: 1.45 }, 1.45)
-    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate - 4, x: base('leftLeg').x - 2, duration: 1.45 }, 0)
-    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate, x: base('leftLeg').x, duration: 1.45 }, 1.45)
-    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate + 5, x: base('rightLeg').x + 2, duration: 1.45 }, 0)
-    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate, x: base('rightLeg').x, duration: 1.45 }, 1.45);
+    .set(partElements.head, { x: -15, y: -107, rotate: 1, scale: 1.15, transformOrigin: '50% 75.03%' }, 0)
+    .set(partElements.leftHand, { x: 8, y: -68, rotate: 13, scale: 1.11, transformOrigin: '80% 15%' }, 0)
+    .set(partElements.leftLeg, { x: -12, y: -67, rotate: 17, scale: 1.02, transformOrigin: '60% 10%' }, 0)
+    .set(partElements.rightHand, { x: -38, y: -53, rotate: -6, scale: 1.95, transformOrigin: '15% 30%' }, 0)
+    .set(partElements.rightLeg, { x: -32, y: -74, rotate: 9, scale: 1.28, transformOrigin: '45% 10%' }, 0)
+    .to(partElements.leftHand, { rotate: 2, duration: 0.496, ease: 'sine.in' }, 0)
+    .to(partElements.rightLeg, { rotate: 18, duration: 0.497, ease: 'sine.in' }, 0)
+    .to(partElements.head, { rotate: 13, duration: 0.499, ease: 'sine.in' }, 0)
+    .to(partElements.leftLeg, { rotate: 13, duration: 0.502, ease: 'sine.in' }, 0)
+    .to(partElements.rightHand, { x: -17, rotate: 26, duration: 0.503, ease: 'sine.in' }, 0)
+    .to(partElements.head, { rotate: -2, duration: 0.847, ease: 'sine.in' }, 0.499)
+    .to(partElements.leftHand, { rotate: -7, duration: 0.85, ease: 'sine.in' }, 0.496)
+    .to(partElements.rightHand, { x: 8, y: -41, rotate: 48, duration: 0.843, ease: 'sine.in' }, 0.503)
+    .to(partElements.rightLeg, { rotate: 23, duration: 0.849, ease: 'sine.in' }, 0.497)
+    .to(partElements.leftLeg, { rotate: 6, duration: 0.847, ease: 'sine.in' }, 0.502)
+    .to(partElements.head, { rotate: 1, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.leftHand, { rotate: 13, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.rightHand, { x: -38, y: -53, rotate: -6, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.rightLeg, { rotate: 9, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.leftLeg, { rotate: 17, duration: 0.151, ease: 'sine.inOut' }, 1.349);
+
+  return timeline;
+}
+
+function buildInspiredTimeline() {
+  const timeline = gsap.timeline({ repeat: -1, defaults: { ease: 'sine.inOut' } });
+
+  timeline
+    .to(robot, { y: base('robot').y - 7, rotate: base('robot').rotate - 2, duration: 0.42 }, 0)
+    .to(partElements.head, { y: base('head').y - 7, rotate: base('head').rotate + 9, duration: 0.42 }, 0)
+    .to(partElements.leftHand, { rotate: base('leftHand').rotate - 13, y: base('leftHand').y - 3, duration: 0.42 }, 0)
+    .to(partElements.rightHand, { x: base('rightHand').x + 26, y: base('rightHand').y + 11, rotate: base('rightHand').rotate + 45, duration: 0.42 }, 0)
+    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate - 8, x: base('leftLeg').x - 3, duration: 0.42 }, 0)
+    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate + 25, x: base('rightLeg').x + 3, duration: 0.42 }, 0)
+    .to(robot, { y: base('robot').y + 2, rotate: base('robot').rotate + 1, duration: 0.46 }, 0.42)
+    .to(partElements.head, { y: base('head').y - 2, rotate: base('head').rotate - 5, duration: 0.46 }, 0.42)
+    .to(partElements.leftHand, { rotate: base('leftHand').rotate + 14, y: base('leftHand').y + 1, duration: 0.46 }, 0.42)
+    .to(partElements.rightHand, { x: base('rightHand').x + 42, y: base('rightHand').y + 6, rotate: base('rightHand').rotate + 58, duration: 0.46 }, 0.42)
+    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate + 2, x: base('leftLeg').x + 2, duration: 0.46 }, 0.42)
+    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate + 31, x: base('rightLeg').x - 1, duration: 0.46 }, 0.42)
+    .to(robot, { y: base('robot').y, rotate: base('robot').rotate, duration: 0.52 }, 0.88)
+    .to(partElements.head, { y: base('head').y, rotate: base('head').rotate, duration: 0.52 }, 0.88)
+    .to(partElements.leftHand, { rotate: base('leftHand').rotate, y: base('leftHand').y, duration: 0.52 }, 0.88)
+    .to(partElements.rightHand, { x: base('rightHand').x, y: base('rightHand').y, rotate: base('rightHand').rotate, duration: 0.52 }, 0.88)
+    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate, x: base('leftLeg').x, duration: 0.52 }, 0.88)
+    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate, x: base('rightLeg').x, duration: 0.52 }, 0.88);
 
   return timeline;
 }
 
 function pauseAnimations() {
   idleTimeline?.pause();
+  inspiredTimeline?.pause();
   talkTimeline?.pause();
   gsap.getTweensOf(Object.values(partElements)).forEach((tween) => tween.pause());
 }
 
 function resumeAnimations() {
   idleTimeline?.resume();
+  inspiredTimeline?.resume();
   talkTimeline?.resume();
   gsap.getTweensOf(Object.values(partElements)).forEach((tween) => tween.resume());
 }
 
 function startIdle() {
+  inspiredTimeline?.pause(0);
+  applyRobotConfig();
+
   if (!idleTimeline) {
     idleTimeline = buildIdleTimeline();
   }
 
-  idleTimeline.play();
+  idleTimeline.restart();
+}
+
+function startInspiredIdle() {
+  idleTimeline?.pause(0);
+  applyRobotConfig();
+
+  if (!inspiredTimeline) {
+    inspiredTimeline = buildInspiredTimeline();
+  }
+
+  inspiredTimeline.restart();
 }
 
 function stopIdle() {
-  idleTimeline?.pause();
+  idleTimeline?.pause(0);
+  inspiredTimeline?.pause(0);
+  applyRobotConfig();
 }
 
 function wave() {
@@ -497,6 +548,7 @@ window.ROBOT_CONFIG = ROBOT_CONFIG;
 window.startIdle = startIdle;
 window.stopIdle = stopIdle;
 window.wave = wave;
+window.startInspiredIdle = startInspiredIdle;
 window.talkStart = talkStart;
 window.talkStop = talkStop;
 
@@ -508,6 +560,7 @@ controls.addEventListener('click', (event) => {
     idle: startIdle,
     stop: stopIdle,
     wave,
+    inspired: startInspiredIdle,
     talk: talkStart,
     'talk-stop': talkStop,
   };
@@ -536,7 +589,118 @@ const EASE_OPTIONS = [
   'elastic.out',
 ];
 const DEFAULT_ANIMATION_DATA = {
-  idle: { name: 'Idle', duration: 3.6, loop: true, keyframes: [] },
+  idle: {
+    name: 'Idle',
+    duration: 1.5,
+    loop: true,
+    keyframes: [
+      {
+        id: 'kf-1783854376719-2f1892c6d9228',
+        time: 0,
+        part: 'head',
+        values: { x: -15, y: -107, rotate: 1, scale: 1.15, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 50, transformOriginY: 75.03 },
+        ease: 'none',
+      },
+      {
+        id: 'kf-1783854570870-d44ee7d024aaa8',
+        time: 0,
+        part: 'leftHand',
+        values: { x: 8, y: -68, rotate: 13, scale: 1.11, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 80, transformOriginY: 15 },
+        ease: 'none',
+      },
+      {
+        id: 'kf-1783854594638-a7201f20c6ba',
+        time: 0,
+        part: 'leftLeg',
+        values: { x: -12, y: -67, rotate: 17, scale: 1.02, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 60, transformOriginY: 10 },
+        ease: 'none',
+      },
+      {
+        id: 'kf-1784032997085-7ab2259c67747',
+        time: 0,
+        part: 'rightHand',
+        values: { x: -38, y: -53, rotate: -6, scale: 1.95, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 15, transformOriginY: 30 },
+        ease: 'none',
+      },
+      {
+        id: 'kf-1783854600301-22bd2b0da896',
+        time: 0,
+        part: 'rightLeg',
+        values: { x: -32, y: -74, rotate: 9, scale: 1.28, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 45, transformOriginY: 10 },
+        ease: 'none',
+      },
+      {
+        id: 'kf-1783854437914-64afca06b02c08',
+        time: 0.496,
+        part: 'leftHand',
+        values: { x: 8, y: -68, rotate: 2, scale: 1.11, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 80, transformOriginY: 15 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1783854497902-d2fcac3fdd037',
+        time: 0.497,
+        part: 'rightLeg',
+        values: { x: -32, y: -74, rotate: 18, scale: 1.28, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 45, transformOriginY: 10 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1783855180457-b5cd55d0474b28',
+        time: 0.499,
+        part: 'head',
+        values: { x: -15, y: -107, rotate: 13, scale: 1.15, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 50, transformOriginY: 75.03 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1783854398087-905ff75f6fce',
+        time: 0.502,
+        part: 'leftLeg',
+        values: { x: -12, y: -67, rotate: 13, scale: 1.02, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 60, transformOriginY: 10 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1784033011647-0a74c054c7313',
+        time: 0.503,
+        part: 'rightHand',
+        values: { x: -17, y: -53, rotate: 26, scale: 1.95, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 15, transformOriginY: 30 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1784667363117-6d2ee3c22de82',
+        time: 1.346,
+        part: 'head',
+        values: { x: -15, y: -107, rotate: -2, scale: 1.15, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 50, transformOriginY: 75.03 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1784667410218-61903269721e7',
+        time: 1.346,
+        part: 'leftHand',
+        values: { x: 8, y: -68, rotate: -7, scale: 1.11, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 80, transformOriginY: 15 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1784667467835-d56a02d6580268',
+        time: 1.346,
+        part: 'rightHand',
+        values: { x: 8, y: -41, rotate: 48, scale: 1.95, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 15, transformOriginY: 30 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1784667517485-9842dab169f52',
+        time: 1.346,
+        part: 'rightLeg',
+        values: { x: -32, y: -74, rotate: 23, scale: 1.28, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 45, transformOriginY: 10 },
+        ease: 'sine.in',
+      },
+      {
+        id: 'kf-1784667492023-19209b0b1d6b8',
+        time: 1.349,
+        part: 'leftLeg',
+        values: { x: -12, y: -67, rotate: 6, scale: 1.02, scaleX: 1, scaleY: 1, opacity: 1, transformOriginX: 60, transformOriginY: 10 },
+        ease: 'sine.in',
+      },
+    ],
+  },
   wave: { name: 'Wave', duration: 2.4, loop: false, keyframes: [] },
   talk: { name: 'Talk', duration: 1.2, loop: true, keyframes: [] },
   happy: { name: 'Happy', duration: 2.8, loop: false, keyframes: [] },
