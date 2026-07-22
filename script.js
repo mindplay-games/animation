@@ -1,5 +1,5 @@
-const DEBUG_ROBOT = true;
-const ANIMATION_EDITOR_ENABLED = true;
+const DEBUG_ROBOT = false;
+const ANIMATION_EDITOR_ENABLED = false;
 
 const ROBOT_CONFIG = {
   robot: {
@@ -129,6 +129,7 @@ const originDots = new Map();
 
 let selectedPart = 'head';
 let idleTimeline;
+let inspiredTimeline;
 let talkTimeline;
 let debugPanel;
 
@@ -206,46 +207,96 @@ function buildIdleTimeline() {
   const timeline = gsap.timeline({ repeat: -1, defaults: { ease: 'sine.inOut' } });
 
   timeline
-    .to(robot, { y: base('robot').y - 8, duration: 1.45 }, 0)
-    .to(robot, { y: base('robot').y, duration: 1.45 }, 1.45)
-    .to(partElements.body, { scaleY: base('body').scaleY + 0.025, y: base('body').y - 3, duration: 1.45 }, 0)
-    .to(partElements.body, { scaleY: base('body').scaleY, y: base('body').y, duration: 1.45 }, 1.45)
-    .to(partElements.head, { rotate: base('head').rotate + 4.5, y: base('head').y - 4, duration: 1.45 }, 0)
-    .to(partElements.head, { rotate: base('head').rotate, y: base('head').y, duration: 1.45 }, 1.45)
-    .to(partElements.leftHand, { rotate: base('leftHand').rotate + 5, y: base('leftHand').y - 3, duration: 1.45 }, 0)
-    .to(partElements.leftHand, { rotate: base('leftHand').rotate, y: base('leftHand').y, duration: 1.45 }, 1.45)
-    .to(partElements.rightHand, { rotate: base('rightHand').rotate + 10, y: base('rightHand').y - 4, duration: 1.45 }, 0)
-    .to(partElements.rightHand, { rotate: base('rightHand').rotate, y: base('rightHand').y, duration: 1.45 }, 1.45)
-    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate - 4, x: base('leftLeg').x - 2, duration: 1.45 }, 0)
-    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate, x: base('leftLeg').x, duration: 1.45 }, 1.45)
-    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate + 5, x: base('rightLeg').x + 2, duration: 1.45 }, 0)
-    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate, x: base('rightLeg').x, duration: 1.45 }, 1.45);
+    .set(partElements.head, { x: -15, y: -107, rotate: 1, scale: 1.15, transformOrigin: '50% 75.03%' }, 0)
+    .set(partElements.leftHand, { x: 8, y: -68, rotate: 13, scale: 1.11, transformOrigin: '80% 15%' }, 0)
+    .set(partElements.leftLeg, { x: -12, y: -67, rotate: 17, scale: 1.02, transformOrigin: '60% 10%' }, 0)
+    .set(partElements.rightHand, { x: -38, y: -53, rotate: -6, scale: 1.95, transformOrigin: '15% 30%' }, 0)
+    .set(partElements.rightLeg, { x: -32, y: -74, rotate: 9, scale: 1.28, transformOrigin: '45% 10%' }, 0)
+    .to(partElements.leftHand, { rotate: 2, duration: 0.496, ease: 'sine.in' }, 0)
+    .to(partElements.rightLeg, { rotate: 18, duration: 0.497, ease: 'sine.in' }, 0)
+    .to(partElements.head, { rotate: 13, duration: 0.499, ease: 'sine.in' }, 0)
+    .to(partElements.leftLeg, { rotate: 13, duration: 0.502, ease: 'sine.in' }, 0)
+    .to(partElements.rightHand, { x: -17, rotate: 26, duration: 0.503, ease: 'sine.in' }, 0)
+    .to(partElements.head, { rotate: -2, duration: 0.847, ease: 'sine.in' }, 0.499)
+    .to(partElements.leftHand, { rotate: -7, duration: 0.85, ease: 'sine.in' }, 0.496)
+    .to(partElements.rightHand, { x: 8, y: -41, rotate: 48, duration: 0.843, ease: 'sine.in' }, 0.503)
+    .to(partElements.rightLeg, { rotate: 23, duration: 0.849, ease: 'sine.in' }, 0.497)
+    .to(partElements.leftLeg, { rotate: 6, duration: 0.847, ease: 'sine.in' }, 0.502)
+    .to(partElements.head, { rotate: 1, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.leftHand, { rotate: 13, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.rightHand, { x: -38, y: -53, rotate: -6, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.rightLeg, { rotate: 9, duration: 0.154, ease: 'sine.inOut' }, 1.346)
+    .to(partElements.leftLeg, { rotate: 17, duration: 0.151, ease: 'sine.inOut' }, 1.349);
+
+  return timeline;
+}
+
+function buildInspiredTimeline() {
+  const timeline = gsap.timeline({ repeat: -1, defaults: { ease: 'sine.inOut' } });
+
+  timeline
+    .to(robot, { y: base('robot').y - 7, rotate: base('robot').rotate - 2, duration: 0.42 }, 0)
+    .to(partElements.head, { y: base('head').y - 7, rotate: base('head').rotate + 9, duration: 0.42 }, 0)
+    .to(partElements.leftHand, { rotate: base('leftHand').rotate - 13, y: base('leftHand').y - 3, duration: 0.42 }, 0)
+    .to(partElements.rightHand, { x: base('rightHand').x + 26, y: base('rightHand').y + 11, rotate: base('rightHand').rotate + 45, duration: 0.42 }, 0)
+    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate - 8, x: base('leftLeg').x - 3, duration: 0.42 }, 0)
+    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate + 25, x: base('rightLeg').x + 3, duration: 0.42 }, 0)
+    .to(robot, { y: base('robot').y + 2, rotate: base('robot').rotate + 1, duration: 0.46 }, 0.42)
+    .to(partElements.head, { y: base('head').y - 2, rotate: base('head').rotate - 5, duration: 0.46 }, 0.42)
+    .to(partElements.leftHand, { rotate: base('leftHand').rotate + 14, y: base('leftHand').y + 1, duration: 0.46 }, 0.42)
+    .to(partElements.rightHand, { x: base('rightHand').x + 42, y: base('rightHand').y + 6, rotate: base('rightHand').rotate + 58, duration: 0.46 }, 0.42)
+    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate + 2, x: base('leftLeg').x + 2, duration: 0.46 }, 0.42)
+    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate + 31, x: base('rightLeg').x - 1, duration: 0.46 }, 0.42)
+    .to(robot, { y: base('robot').y, rotate: base('robot').rotate, duration: 0.52 }, 0.88)
+    .to(partElements.head, { y: base('head').y, rotate: base('head').rotate, duration: 0.52 }, 0.88)
+    .to(partElements.leftHand, { rotate: base('leftHand').rotate, y: base('leftHand').y, duration: 0.52 }, 0.88)
+    .to(partElements.rightHand, { x: base('rightHand').x, y: base('rightHand').y, rotate: base('rightHand').rotate, duration: 0.52 }, 0.88)
+    .to(partElements.leftLeg, { rotate: base('leftLeg').rotate, x: base('leftLeg').x, duration: 0.52 }, 0.88)
+    .to(partElements.rightLeg, { rotate: base('rightLeg').rotate, x: base('rightLeg').x, duration: 0.52 }, 0.88);
 
   return timeline;
 }
 
 function pauseAnimations() {
   idleTimeline?.pause();
+  inspiredTimeline?.pause();
   talkTimeline?.pause();
   gsap.getTweensOf(Object.values(partElements)).forEach((tween) => tween.pause());
 }
 
 function resumeAnimations() {
   idleTimeline?.resume();
+  inspiredTimeline?.resume();
   talkTimeline?.resume();
   gsap.getTweensOf(Object.values(partElements)).forEach((tween) => tween.resume());
 }
 
 function startIdle() {
+  inspiredTimeline?.pause(0);
+  applyRobotConfig();
+
   if (!idleTimeline) {
     idleTimeline = buildIdleTimeline();
   }
 
-  idleTimeline.play();
+  idleTimeline.restart();
+}
+
+function startInspiredIdle() {
+  idleTimeline?.pause(0);
+  applyRobotConfig();
+
+  if (!inspiredTimeline) {
+    inspiredTimeline = buildInspiredTimeline();
+  }
+
+  inspiredTimeline.restart();
 }
 
 function stopIdle() {
-  idleTimeline?.pause();
+  idleTimeline?.pause(0);
+  inspiredTimeline?.pause(0);
+  applyRobotConfig();
 }
 
 function wave() {
@@ -497,6 +548,7 @@ window.ROBOT_CONFIG = ROBOT_CONFIG;
 window.startIdle = startIdle;
 window.stopIdle = stopIdle;
 window.wave = wave;
+window.startInspiredIdle = startInspiredIdle;
 window.talkStart = talkStart;
 window.talkStop = talkStop;
 
@@ -508,6 +560,7 @@ controls.addEventListener('click', (event) => {
     idle: startIdle,
     stop: stopIdle,
     wave,
+    inspired: startInspiredIdle,
     talk: talkStart,
     'talk-stop': talkStop,
   };
