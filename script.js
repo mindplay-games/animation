@@ -112,6 +112,7 @@ const CONFIG_FIELDS = [
 
 const PART_NAMES = ['robot', 'head', 'body', 'leftHand', 'rightHand', 'leftLeg', 'rightLeg'];
 
+const robotWrapper = document.querySelector('[data-part="robotWrapper"]');
 const robot = document.querySelector('[data-part="robot"]');
 const controls = document.querySelector('.controls');
 const partElements = {
@@ -129,6 +130,7 @@ const originDots = new Map();
 
 let selectedPart = 'head';
 let idleTimeline;
+let floatTimeline;
 let inspiredTimeline;
 let talkTimeline;
 let waveTimeline;
@@ -201,7 +203,46 @@ function applyRobotConfig() {
 }
 
 function base(partName) {
-  return ROBOT_CONFIG[partName];
+  return initialConfig[partName];
+}
+
+function resetPartToBase(partName, options = {}) {
+  const element = partElements[partName];
+  const partBase = base(partName);
+
+  gsap.set(element, {
+    x: partBase.x ?? 0,
+    y: partBase.y ?? 0,
+    rotate: partBase.rotate ?? 0,
+    scale: partBase.scale ?? 1,
+    scaleX: partBase.scaleX ?? 1,
+    scaleY: partBase.scaleY ?? 1,
+    transformOrigin: options.transformOrigin ?? partBase.transformOrigin,
+    zIndex: options.zIndex ?? partBase.zIndex,
+  });
+}
+
+function buildFloatTimeline() {
+  const timeline = gsap.timeline({
+    repeat: -1,
+    yoyo: true,
+    defaults: { ease: 'sine.inOut', overwrite: 'auto' },
+  });
+
+  timeline.to(robotWrapper, { y: -6, rotate: 1, duration: 2.2 });
+
+  return timeline;
+}
+
+function ensureFloatTimeline() {
+  if (!floatTimeline) {
+    gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1, transformOrigin: '50% 56%' });
+    floatTimeline = buildFloatTimeline();
+  }
+
+  if (!floatTimeline.isActive()) {
+    floatTimeline.play();
+  }
 }
 
 function buildIdleTimeline() {
@@ -318,6 +359,7 @@ function stopAllAnimations({ reset = true } = {}) {
 
 function startIdle() {
   stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
 
   if (!idleTimeline) {
     idleTimeline = buildIdleTimeline();
@@ -329,6 +371,7 @@ function startIdle() {
 
 function startInspiredIdle() {
   stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
 
   if (!inspiredTimeline) {
     inspiredTimeline = buildInspiredTimeline();
@@ -345,39 +388,35 @@ function stopIdle() {
 function wave() {
   const hand = partElements.rightHand;
   const head = partElements.head;
-  const robot = partElements.robot;
 
   const handBase = base('rightHand');
   const headBase = base('head');
-  const robotBase = base('robot');
+  const shoulderOrigin = '18% 30%';
+  const WAVE_LEFT_ANGLE = handBase.rotate - 10;
+  const WAVE_RIGHT_ANGLE = handBase.rotate + 12;
 
   const idleWasRunning = Boolean(idleTimeline?.isActive() || inspiredTimeline?.isActive());
-
   const activeIdle = inspiredTimeline?.isActive() ? 'inspired' : idleTimeline?.isActive() ? 'idle' : null;
 
+  ensureFloatTimeline();
   idleTimeline?.pause();
   inspiredTimeline?.pause();
   talkTimeline?.kill();
   talkTimeline = null;
 
   waveTimeline?.kill();
+  gsap.killTweensOf([hand, head]);
 
-  gsap.killTweensOf([hand, head, robot]);
-
-  /*
-   * Keep the pivot close to the shoulder so the hand rotates from the body joint.
-   * Tune these percentages in small increments if the SVG bounds change.
-   */
-  gsap.set(hand, {
-    transformOrigin: '18% 30%',
+  resetPartToBase('rightHand', {
+    transformOrigin: shoulderOrigin,
+    zIndex: Math.max(handBase.zIndex ?? 0, (headBase.zIndex ?? 0) + 1),
   });
 
   waveTimeline = gsap.timeline({
-    defaults: {
-      overwrite: 'auto',
-    },
-
+    defaults: { overwrite: 'auto' },
     onComplete: () => {
+      resetPartToBase('rightHand');
+      resetPartToBase('head');
       waveTimeline = null;
 
       if (idleWasRunning && activeIdle === 'idle') {
@@ -393,117 +432,22 @@ function wave() {
   });
 
   waveTimeline
-    .to(
-      hand,
-      {
-        x: handBase.x - 5,
-        y: handBase.y + 3,
-        rotate: handBase.rotate - 10,
-        scaleX: handBase.scaleX ?? 1,
-        scaleY: handBase.scaleY ?? 1,
-        duration: 0.18,
-        ease: 'power2.out',
-      },
-      0
-    )
-    .to(
-      head,
-      {
-        x: headBase.x + 1,
-        y: headBase.y,
-        rotate: headBase.rotate + 3,
-        duration: 0.22,
-        ease: 'sine.out',
-      },
-      0.03
-    )
-    .to(
-      robot,
-      {
-        rotate: robotBase.rotate - 1.5,
-        duration: 0.22,
-        ease: 'sine.out',
-      },
-      0.03
-    )
     .to(hand, {
-      x: handBase.x - 7,
+      x: handBase.x - 2,
       y: handBase.y + 1,
-      rotate: handBase.rotate - 24,
-      scaleX: (handBase.scaleX ?? 1) * 0.99,
-      scaleY: (handBase.scaleY ?? 1) * 1.01,
-      duration: 0.16,
-      ease: 'power2.inOut',
-    })
-    .to(hand, {
-      x: handBase.x - 3,
-      y: handBase.y - 1,
-      rotate: handBase.rotate + 8,
-      scaleX: (handBase.scaleX ?? 1) * 1.01,
-      scaleY: (handBase.scaleY ?? 1) * 0.99,
-      duration: 0.18,
-      ease: 'power2.inOut',
-    })
-    .to(hand, {
-      x: handBase.x - 6,
-      y: handBase.y + 1,
-      rotate: handBase.rotate - 18,
-      duration: 0.15,
-      ease: 'sine.inOut',
-    })
-    .to(hand, {
-      x: handBase.x - 3,
-      y: handBase.y - 1,
-      rotate: handBase.rotate + 5,
-      duration: 0.16,
-      ease: 'sine.inOut',
-    })
-    .to(hand, {
-      x: handBase.x - 5,
-      y: handBase.y + 1,
-      rotate: handBase.rotate - 14,
-      duration: 0.14,
-      ease: 'sine.inOut',
-    })
-    .to(hand, {
-      x: handBase.x - 3,
-      y: handBase.y,
-      rotate: handBase.rotate + 2,
-      duration: 0.15,
-      ease: 'sine.inOut',
-    })
-    .to({}, { duration: 0.08 })
-    .to(hand, {
-      x: handBase.x,
-      y: handBase.y,
-      rotate: handBase.rotate,
+      rotate: WAVE_LEFT_ANGLE,
       scaleX: handBase.scaleX ?? 1,
       scaleY: handBase.scaleY ?? 1,
-      duration: 0.32,
-      ease: 'back.out(1.15)',
+      transformOrigin: shoulderOrigin,
+      duration: 0.18,
+      ease: 'power2.out',
     })
-    .to(
-      head,
-      {
-        x: headBase.x,
-        y: headBase.y,
-        rotate: headBase.rotate,
-        duration: 0.3,
-        ease: 'sine.inOut',
-      },
-      '<'
-    )
-    .to(
-      robot,
-      {
-        x: robotBase.x ?? 0,
-        y: robotBase.y ?? 0,
-        rotate: robotBase.rotate,
-        duration: 0.3,
-        ease: 'sine.inOut',
-      },
-      '<'
-    );
+    .to(head, { x: headBase.x + 1, y: headBase.y, rotate: headBase.rotate + 1.5, duration: 0.22, ease: 'sine.out' }, 0.03)
+    .to(hand, { x: handBase.x - 1, y: handBase.y, rotate: WAVE_RIGHT_ANGLE, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.18, ease: 'sine.inOut' })
+    .to(hand, { x: handBase.x - 2, y: handBase.y + 1, rotate: WAVE_LEFT_ANGLE, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.16, ease: 'sine.inOut' })
+    .to(hand, { x: handBase.x - 1, y: handBase.y, rotate: WAVE_RIGHT_ANGLE, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.16, ease: 'sine.inOut' })
+    .to(hand, { x: handBase.x, y: handBase.y, rotate: handBase.rotate, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.24, ease: 'sine.inOut' })
+    .to(head, { x: headBase.x, y: headBase.y, rotate: headBase.rotate, duration: 0.22, ease: 'sine.inOut' }, '<');
 
   setActiveButton('wave');
 
@@ -512,6 +456,7 @@ function wave() {
 
 function talkStart() {
   stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
 
   const head = partElements.head;
   const body = partElements.body;
@@ -530,21 +475,18 @@ function talkStart() {
     .to(head, {
       y: headBase.y + 2,
       rotate: headBase.rotate + 2,
-      scaleY: (headBase.scaleY ?? 1) * 0.97,
-      duration: 0.13,
+      duration: 0.12,
       ease: 'power1.out',
     })
     .to(head, {
       y: headBase.y,
-      rotate: headBase.rotate - 1,
-      scaleY: headBase.scaleY ?? 1,
-      duration: 0.16,
+      rotate: headBase.rotate - 1.5,
+      duration: 0.14,
       ease: 'power1.inOut',
     })
     .to(head, {
-      y: headBase.y + 1,
-      rotate: headBase.rotate + 1,
-      scaleY: (headBase.scaleY ?? 1) * 0.985,
+      y: headBase.y - 1,
+      rotate: headBase.rotate + 1.5,
       duration: 0.11,
       ease: 'sine.out',
     })
@@ -561,7 +503,6 @@ function talkStart() {
     .to(head, {
       y: headBase.y,
       rotate: headBase.rotate,
-      scaleY: headBase.scaleY ?? 1,
       duration: 0.2,
       ease: 'sine.inOut',
     })
@@ -805,6 +746,7 @@ function handleDebugKeyboard(event) {
 }
 
 applyRobotConfig();
+ensureFloatTimeline();
 startIdle();
 
 if (DEBUG_ROBOT) {
