@@ -31,7 +31,8 @@ body {
   place-items: center;
   align-content: center;
   gap: 1.25rem;
-  padding: 1.5rem;
+  padding: 4.5rem 1.5rem 1.5rem;
+  overflow: visible;
 }
 
 .robot-ground-shadow {
@@ -48,12 +49,24 @@ body {
   pointer-events: none;
 }
 
-.robot {
+.robot-wrapper {
   position: relative;
   width: var(--robot-width);
   height: var(--robot-height);
   max-width: var(--stage-size);
   aspect-ratio: 450 / 560;
+  overflow: visible;
+  transform-origin: 50% 56%;
+  will-change: transform;
+}
+
+.robot {
+  position: relative;
+  width: var(--robot-width);
+  height: var(--robot-height);
+  max-width: 100%;
+  aspect-ratio: 450 / 560;
+  overflow: visible;
   filter: drop-shadow(0 2rem 1.75rem var(--shadow));
   transform-origin: 50% 56%;
 }

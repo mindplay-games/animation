@@ -9,14 +9,16 @@
   <body>
     <main class="stage" aria-label="Animated robot character demo">
       <div class="robot-ground-shadow" aria-hidden="true"></div>
-      <section class="robot" data-part="robot" aria-label="Robot character assembled from SVG parts">
-        <img class="robot-part" data-part="leftLeg" src="assets/leftleg.svg" alt="" aria-hidden="true" />
-        <img class="robot-part" data-part="rightLeg" src="assets/rightleg.svg" alt="" aria-hidden="true" />
-        <img class="robot-part" data-part="body" src="assets/body.svg" alt="" aria-hidden="true" />
-        <img class="robot-part" data-part="leftHand" src="assets/lhand.svg" alt="" aria-hidden="true" />
-        <img class="robot-part" data-part="rightHand" src="assets/rhand.svg" alt="" aria-hidden="true" />
-        <img class="robot-part" data-part="head" src="assets/head.svg" alt="Friendly robot character" />
-      </section>
+      <div class="robot-wrapper" data-part="robotWrapper">
+        <section class="robot" data-part="robot" aria-label="Robot character assembled from SVG parts">
+          <img class="robot-part" data-part="leftLeg" src="assets/leftleg.svg" alt="" aria-hidden="true" />
+          <img class="robot-part" data-part="rightLeg" src="assets/rightleg.svg" alt="" aria-hidden="true" />
+          <img class="robot-part" data-part="body" src="assets/body.svg" alt="" aria-hidden="true" />
+          <img class="robot-part" data-part="leftHand" src="assets/lhand.svg" alt="" aria-hidden="true" />
+          <img class="robot-part" data-part="rightHand" src="assets/rhand.svg" alt="" aria-hidden="true" />
+          <img class="robot-part" data-part="head" src="assets/head.svg" alt="Friendly robot character" />
+        </section>
+      </div>
 
       <div class="controls" aria-label="Animation controls">
         <button type="button" data-action="idle">Idle</button>
