@@ -20,6 +20,10 @@ A responsive animated HTML character assembled from separate SVG parts and anima
 
 Keep the SVG files in the `assets/` folder with the exact filenames above. The `<img>` elements in `index.html` reference those paths directly.
 
+## Animation quality guide
+
+A Hebrew summary of the animation principles, fixes, and lessons learned for keeping the character balanced, natural, structurally logical, and free from body-part distortion is available in [`docs/animation-guidelines-he.md`](docs/animation-guidelines-he.md).
+
 ## Local preview
 
 Run a local static server from the repository root:
