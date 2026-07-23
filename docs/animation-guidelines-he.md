@@ -160,3 +160,152 @@ Talk צריך להיות עדין ומהיר יחסית, עם תנועת ראש 
 - לא נותנים לאנימציות להצטבר זו על זו בלי איפוס.
 - כל פעולה זמנית חייבת לדעת איך לחזור למצב הבסיס.
 - אם משהו נראה “לא טבעי”, לבדוק לפי הסדר: חיבור איבר, נקודת ציר, טווח תנועה, easing, ואז תזמון.
+
+## English AI instructions for creating new site animations
+
+Use this section as a practical prompt or checklist for any AI agent that needs to add a new animation to this website.
+
+### 1. Understand the character before animating
+
+The character is built from separate SVG body parts: head, body, left hand, right hand, left leg and right leg. Each part already has a carefully tuned base position in `ROBOT_CONFIG`. Before creating a new animation, inspect the existing base values and treat them as the source of truth. Do not randomly resize, stretch or reposition parts unless the base assembly itself is being corrected.
+
+### 2. Start every animation from the base pose
+
+A new animation should begin from the current base pose returned by `base(partName)`. Use helper patterns such as `base('head').x`, `base('rightHand').rotate` and `resetPartToBase(partName)` instead of hardcoding unrelated values. This keeps animations compatible with future character alignment fixes.
+
+### 3. Animate only safe transform properties
+
+Prefer animating these properties:
+
+- `x`
+- `y`
+- `rotate`
+- occasionally uniform `scale`
+
+Avoid animating these properties unless there is a very specific reason:
+
+- `width`
+- `left`
+- `top`
+- large `scaleX` or `scaleY` changes
+- unrelated `transformOrigin` changes during the animation
+
+Changing `scaleX` and `scaleY` separately can visually deform body parts, so use them only for very subtle squash/stretch effects and always return them to `1` or the configured base value.
+
+### 4. Keep pivots anatomically logical
+
+Every part should rotate around a believable joint:
+
+- Head rotates near the neck connection.
+- Hands rotate near the shoulder/body connection.
+- Legs rotate near the hip/top-leg connection.
+- The full robot rotates around its visual center of mass.
+
+If a limb appears detached while rotating, fix the `transformOrigin` first. Do not compensate by adding many extra `x`/`y` keyframes unless the pivot is already correct.
+
+### 5. Keep motion ranges small and readable
+
+Natural animation usually comes from small, controlled offsets. As a default rule:
+
+- Head rotation should be subtle unless the action is intentionally expressive.
+- Arms should not swing far enough to look broken or detached.
+- Legs should support the character weight and should not float independently.
+- Whole-body motion should be small enough that the character still feels balanced.
+
+If the animation looks exciting but the character structure looks wrong, reduce the range of motion.
+
+### 6. Use soft easing and staggered timing
+
+Use smooth easing such as `sine.inOut`, `sine.out`, `sine.in`, `power1.out` or `power1.inOut`. Avoid abrupt linear movement for organic character motion unless the animation intentionally needs a mechanical effect.
+
+Small timing offsets between parts can make the motion feel more alive. For example, let the head react slightly after the body, or let a hand settle a little after the main movement.
+
+### 7. Manage animation conflicts
+
+Before starting a new main animation, stop or pause timelines that might conflict with it. Follow the existing site pattern:
+
+- Use `stopAllAnimations({ reset: true })` for full mode changes.
+- Use `ensureFloatTimeline()` when the global floating motion should continue.
+- Kill temporary timelines before starting a new temporary action.
+- Resume the previous idle timeline only if that behavior is intentional.
+
+Never allow multiple timelines to fight over the same body part transform at the same time.
+
+### 8. Return cleanly to the base pose
+
+Any one-shot animation must restore the affected parts when it completes. Use `resetPartToBase` or animate the parts back to `base(...)` values. A user should be able to click animation buttons repeatedly without the character drifting, accumulating rotations or ending in a broken pose.
+
+### 9. Update the UI if the animation is user-triggered
+
+If the new animation has a button:
+
+1. Add a button in `index.html` with `data-action="newActionName"`.
+2. Add a matching function in `script.js`.
+3. Register that function in the `actions` object used by the controls click handler.
+4. Call `setActiveButton('newActionName')` when the animation starts.
+5. Clear or restore the active button state when the animation ends.
+
+### 10. Test visually and programmatically
+
+After adding an animation, check these things:
+
+- The character starts from a valid pose.
+- No body part stretches, flips, detaches or changes size unexpectedly.
+- The animation loops cleanly if it is a looping animation.
+- A one-shot animation returns to base pose.
+- Switching between buttons does not create jumps or stuck intermediate poses.
+- `Stop` restores the character and the ground shadow.
+- Browser console has no JavaScript errors.
+
+### Suggested implementation template
+
+```js
+function newAnimationName() {
+  stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
+
+  const headBase = base('head');
+  const handBase = base('rightHand');
+
+  const timeline = gsap.timeline({
+    defaults: { overwrite: 'auto', ease: 'sine.inOut' },
+    onComplete: () => {
+      resetPartToBase('head');
+      resetPartToBase('rightHand');
+      setActiveButton(null);
+    },
+  });
+
+  timeline
+    .to(partElements.head, {
+      x: headBase.x,
+      y: headBase.y - 2,
+      rotate: headBase.rotate + 3,
+      duration: 0.25,
+    })
+    .to(partElements.rightHand, {
+      x: handBase.x + 4,
+      y: handBase.y - 3,
+      rotate: handBase.rotate + 8,
+      duration: 0.3,
+    }, '<')
+    .to(partElements.head, {
+      x: headBase.x,
+      y: headBase.y,
+      rotate: headBase.rotate,
+      duration: 0.25,
+    })
+    .to(partElements.rightHand, {
+      x: handBase.x,
+      y: handBase.y,
+      rotate: handBase.rotate,
+      duration: 0.25,
+    }, '<');
+
+  setActiveButton('newAnimationName');
+
+  return timeline;
+}
+```
+
+Use this template as a starting point, but always adapt the motion to the character structure and the emotional purpose of the animation.
