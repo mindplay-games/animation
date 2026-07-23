@@ -6,12 +6,12 @@ const ROBOT_CONFIG = {
     x: 0,
     y: 0,
     rotate: -7,
-    scale: 1,
+    scale: 0.82,
     scaleX: 1,
     scaleY: 1,
     transformOrigin: '50% 56%',
     zIndex: 0,
-    width: 450,
+    width: 390,
     top: 0,
     left: 0,
   },
@@ -124,6 +124,8 @@ const partElements = {
   leftLeg: document.querySelector('[data-part="leftLeg"]'),
   rightLeg: document.querySelector('[data-part="rightLeg"]'),
 };
+const ANIMATED_PARTS = PART_NAMES.map((partName) => partElements[partName]);
+const FLOAT_TARGETS = [robotWrapper, '.robot-ground-shadow'];
 const initialConfig = structuredClone(ROBOT_CONFIG);
 const debugInputs = new Map();
 const originDots = new Map();
@@ -206,18 +208,29 @@ function base(partName) {
   return initialConfig[partName];
 }
 
-function resetPartToBase(partName, options = {}) {
-  const element = partElements[partName];
+function baseTransform(partName, overrides = {}) {
   const partBase = base(partName);
 
-  gsap.set(element, {
+  return {
     x: partBase.x ?? 0,
     y: partBase.y ?? 0,
     rotate: partBase.rotate ?? 0,
     scale: partBase.scale ?? 1,
     scaleX: partBase.scaleX ?? 1,
     scaleY: partBase.scaleY ?? 1,
-    transformOrigin: options.transformOrigin ?? partBase.transformOrigin,
+    transformOrigin: partBase.transformOrigin,
+    ...overrides,
+  };
+}
+
+function resetPartToBase(partName, options = {}) {
+  const element = partElements[partName];
+  const partBase = base(partName);
+
+  gsap.set(element, {
+    ...baseTransform(partName, {
+      transformOrigin: options.transformOrigin ?? partBase.transformOrigin,
+    }),
     zIndex: options.zIndex ?? partBase.zIndex,
   });
 }
@@ -305,14 +318,18 @@ function pauseAnimations() {
   idleTimeline?.pause();
   inspiredTimeline?.pause();
   talkTimeline?.pause();
-  gsap.getTweensOf(Object.values(partElements)).forEach((tween) => tween.pause());
+  waveTimeline?.pause();
+  floatTimeline?.pause();
+  gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.pause());
 }
 
 function resumeAnimations() {
   idleTimeline?.resume();
   inspiredTimeline?.resume();
   talkTimeline?.resume();
-  gsap.getTweensOf(Object.values(partElements)).forEach((tween) => tween.resume());
+  waveTimeline?.resume();
+  floatTimeline?.resume();
+  gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.resume());
 }
 
 function setActiveButton(actionName) {
@@ -333,16 +350,7 @@ function stopAllAnimations({ reset = true } = {}) {
   talkTimeline = null;
   waveTimeline = null;
 
-  gsap.killTweensOf([
-    partElements.robot,
-    partElements.head,
-    partElements.body,
-    partElements.leftHand,
-    partElements.rightHand,
-    partElements.leftLeg,
-    partElements.rightLeg,
-    '.robot-ground-shadow',
-  ]);
+  gsap.killTweensOf([...ANIMATED_PARTS, '.robot-ground-shadow']);
 
   if (reset) {
     applyRobotConfig();
@@ -391,9 +399,18 @@ function wave() {
 
   const handBase = base('rightHand');
   const headBase = base('head');
-  const shoulderOrigin = '18% 30%';
-  const WAVE_LEFT_ANGLE = handBase.rotate - 10;
-  const WAVE_RIGHT_ANGLE = handBase.rotate + 12;
+  const shoulderOrigin = handBase.transformOrigin;
+  const WAVE_LEFT_ANGLE = handBase.rotate - 4;
+  const WAVE_RIGHT_ANGLE = handBase.rotate + 6;
+  const waveArmTransform = (overrides = {}) => ({
+    x: handBase.x,
+    y: handBase.y,
+    scale: handBase.scale ?? 1,
+    scaleX: handBase.scaleX ?? 1,
+    scaleY: handBase.scaleY ?? 1,
+    transformOrigin: shoulderOrigin,
+    ...overrides,
+  });
 
   const idleWasRunning = Boolean(idleTimeline?.isActive() || inspiredTimeline?.isActive());
   const activeIdle = inspiredTimeline?.isActive() ? 'inspired' : idleTimeline?.isActive() ? 'idle' : null;
@@ -405,11 +422,12 @@ function wave() {
   talkTimeline = null;
 
   waveTimeline?.kill();
-  gsap.killTweensOf([hand, head]);
+  gsap.killTweensOf(ANIMATED_PARTS);
+  PART_NAMES.forEach(resetPartToBase);
 
   resetPartToBase('rightHand', {
     transformOrigin: shoulderOrigin,
-    zIndex: Math.max(handBase.zIndex ?? 0, (headBase.zIndex ?? 0) + 1),
+    zIndex: handBase.zIndex,
   });
 
   waveTimeline = gsap.timeline({
@@ -432,22 +450,13 @@ function wave() {
   });
 
   waveTimeline
-    .to(hand, {
-      x: handBase.x - 2,
-      y: handBase.y + 1,
-      rotate: WAVE_LEFT_ANGLE,
-      scaleX: handBase.scaleX ?? 1,
-      scaleY: handBase.scaleY ?? 1,
-      transformOrigin: shoulderOrigin,
-      duration: 0.18,
-      ease: 'power2.out',
-    })
-    .to(head, { x: headBase.x + 1, y: headBase.y, rotate: headBase.rotate + 1.5, duration: 0.22, ease: 'sine.out' }, 0.03)
-    .to(hand, { x: handBase.x - 1, y: handBase.y, rotate: WAVE_RIGHT_ANGLE, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.18, ease: 'sine.inOut' })
-    .to(hand, { x: handBase.x - 2, y: handBase.y + 1, rotate: WAVE_LEFT_ANGLE, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.16, ease: 'sine.inOut' })
-    .to(hand, { x: handBase.x - 1, y: handBase.y, rotate: WAVE_RIGHT_ANGLE, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.16, ease: 'sine.inOut' })
-    .to(hand, { x: handBase.x, y: handBase.y, rotate: handBase.rotate, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.24, ease: 'sine.inOut' })
-    .to(head, { x: headBase.x, y: headBase.y, rotate: headBase.rotate, duration: 0.22, ease: 'sine.inOut' }, '<');
+    .to(hand, waveArmTransform({ rotate: WAVE_LEFT_ANGLE, duration: 0.24, ease: 'sine.out' }))
+    .to(head, { x: headBase.x + 0.5, y: headBase.y, rotate: headBase.rotate + 0.8, duration: 0.28, ease: 'sine.out' }, 0.05)
+    .to(hand, waveArmTransform({ rotate: WAVE_RIGHT_ANGLE, duration: 0.24, ease: 'sine.inOut' }))
+    .to(hand, waveArmTransform({ rotate: WAVE_LEFT_ANGLE, duration: 0.22, ease: 'sine.inOut' }))
+    .to(hand, waveArmTransform({ rotate: WAVE_RIGHT_ANGLE, duration: 0.22, ease: 'sine.inOut' }))
+    .to(hand, waveArmTransform({ rotate: handBase.rotate, duration: 0.3, ease: 'sine.inOut' }))
+    .to(head, { x: headBase.x, y: headBase.y, rotate: headBase.rotate, duration: 0.26, ease: 'sine.inOut' }, '<');
 
   setActiveButton('wave');
 

@@ -1,7 +1,7 @@
 :root {
-  --stage-size: min(88vw, 560px);
-  --robot-width: 450px;
-  --robot-height: 560px;
+  --stage-size: min(82vw, 430px);
+  --robot-width: 390px;
+  --robot-height: 500px;
   --ink: #302719;
   --shadow: rgba(26, 18, 4, 0.18);
 }
@@ -31,14 +31,14 @@ body {
   place-items: center;
   align-content: center;
   gap: 1.25rem;
-  padding: 4.5rem 1.5rem 1.5rem;
+  padding: 6rem 2rem 2rem;
   overflow: visible;
 }
 
 .robot-ground-shadow {
   position: absolute;
   left: 50%;
-  bottom: 50px;
+  bottom: 70px;
   width: 180px;
   height: 28px;
   border-radius: 50%;
@@ -54,7 +54,7 @@ body {
   width: var(--robot-width);
   height: var(--robot-height);
   max-width: var(--stage-size);
-  aspect-ratio: 450 / 560;
+  aspect-ratio: 390 / 500;
   overflow: visible;
   transform-origin: 50% 56%;
   will-change: transform;
@@ -65,7 +65,7 @@ body {
   width: var(--robot-width);
   height: var(--robot-height);
   max-width: 100%;
-  aspect-ratio: 450 / 560;
+  aspect-ratio: 390 / 500;
   overflow: visible;
   filter: drop-shadow(0 2rem 1.75rem var(--shadow));
   transform-origin: 50% 56%;
