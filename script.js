@@ -400,8 +400,17 @@ function wave() {
   const handBase = base('rightHand');
   const headBase = base('head');
   const shoulderOrigin = handBase.transformOrigin;
-  const WAVE_LEFT_ANGLE = handBase.rotate - 8;
-  const WAVE_RIGHT_ANGLE = handBase.rotate + 10;
+  const WAVE_LEFT_ANGLE = handBase.rotate - 4;
+  const WAVE_RIGHT_ANGLE = handBase.rotate + 6;
+  const waveArmTransform = (overrides = {}) => ({
+    x: handBase.x,
+    y: handBase.y,
+    scale: handBase.scale ?? 1,
+    scaleX: handBase.scaleX ?? 1,
+    scaleY: handBase.scaleY ?? 1,
+    transformOrigin: shoulderOrigin,
+    ...overrides,
+  });
 
   const idleWasRunning = Boolean(idleTimeline?.isActive() || inspiredTimeline?.isActive());
   const activeIdle = inspiredTimeline?.isActive() ? 'inspired' : idleTimeline?.isActive() ? 'idle' : null;
@@ -418,7 +427,7 @@ function wave() {
 
   resetPartToBase('rightHand', {
     transformOrigin: shoulderOrigin,
-    zIndex: Math.max(handBase.zIndex ?? 0, (headBase.zIndex ?? 0) + 1),
+    zIndex: handBase.zIndex,
   });
 
   waveTimeline = gsap.timeline({
@@ -441,23 +450,13 @@ function wave() {
   });
 
   waveTimeline
-    .to(hand, {
-      x: handBase.x - 1,
-      y: handBase.y,
-      rotate: WAVE_LEFT_ANGLE,
-      scale: handBase.scale ?? 1,
-      scaleX: handBase.scaleX ?? 1,
-      scaleY: handBase.scaleY ?? 1,
-      transformOrigin: shoulderOrigin,
-      duration: 0.18,
-      ease: 'power2.out',
-    })
-    .to(head, { x: headBase.x + 1, y: headBase.y, rotate: headBase.rotate + 1.5, duration: 0.22, ease: 'sine.out' }, 0.03)
-    .to(hand, { x: handBase.x - 1, y: handBase.y, rotate: WAVE_RIGHT_ANGLE, scale: handBase.scale ?? 1, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.18, ease: 'sine.inOut' })
-    .to(hand, { x: handBase.x - 1, y: handBase.y, rotate: WAVE_LEFT_ANGLE, scale: handBase.scale ?? 1, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.16, ease: 'sine.inOut' })
-    .to(hand, { x: handBase.x - 1, y: handBase.y, rotate: WAVE_RIGHT_ANGLE, scale: handBase.scale ?? 1, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.16, ease: 'sine.inOut' })
-    .to(hand, { x: handBase.x, y: handBase.y, rotate: handBase.rotate, scale: handBase.scale ?? 1, scaleX: handBase.scaleX ?? 1, scaleY: handBase.scaleY ?? 1, duration: 0.24, ease: 'sine.inOut' })
-    .to(head, { x: headBase.x, y: headBase.y, rotate: headBase.rotate, duration: 0.22, ease: 'sine.inOut' }, '<');
+    .to(hand, waveArmTransform({ rotate: WAVE_LEFT_ANGLE, duration: 0.24, ease: 'sine.out' }))
+    .to(head, { x: headBase.x + 0.5, y: headBase.y, rotate: headBase.rotate + 0.8, duration: 0.28, ease: 'sine.out' }, 0.05)
+    .to(hand, waveArmTransform({ rotate: WAVE_RIGHT_ANGLE, duration: 0.24, ease: 'sine.inOut' }))
+    .to(hand, waveArmTransform({ rotate: WAVE_LEFT_ANGLE, duration: 0.22, ease: 'sine.inOut' }))
+    .to(hand, waveArmTransform({ rotate: WAVE_RIGHT_ANGLE, duration: 0.22, ease: 'sine.inOut' }))
+    .to(hand, waveArmTransform({ rotate: handBase.rotate, duration: 0.3, ease: 'sine.inOut' }))
+    .to(head, { x: headBase.x, y: headBase.y, rotate: headBase.rotate, duration: 0.26, ease: 'sine.inOut' }, '<');
 
   setActiveButton('wave');
 
