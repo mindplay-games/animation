@@ -139,6 +139,7 @@ let waveTimeline;
 let lookAroundTimeline;
 let nodTimeline;
 let bounceTimeline;
+let gestureTimeline;
 let debugPanel;
 
 function splitTransformOrigin(transformOrigin) {
@@ -325,6 +326,7 @@ function pauseAnimations() {
   lookAroundTimeline?.pause();
   nodTimeline?.pause();
   bounceTimeline?.pause();
+  gestureTimeline?.pause();
   floatTimeline?.pause();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.pause());
 }
@@ -337,6 +339,7 @@ function resumeAnimations() {
   lookAroundTimeline?.resume();
   nodTimeline?.resume();
   bounceTimeline?.resume();
+  gestureTimeline?.resume();
   floatTimeline?.resume();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.resume());
 }
@@ -358,12 +361,14 @@ function stopAllAnimations({ reset = true } = {}) {
   lookAroundTimeline?.kill();
   nodTimeline?.kill();
   bounceTimeline?.kill();
+  gestureTimeline?.kill();
 
   talkTimeline = null;
   waveTimeline = null;
   lookAroundTimeline = null;
   nodTimeline = null;
   bounceTimeline = null;
+  gestureTimeline = null;
 
   gsap.killTweensOf([...ANIMATED_PARTS, '.robot-ground-shadow']);
 
@@ -746,6 +751,175 @@ function bounce() {
   return bounceTimeline;
 }
 
+function startGesture(actionName, affectedParts, build) {
+  gestureTimeline?.kill();
+  gestureTimeline = null;
+
+  stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
+
+  gestureTimeline = gsap.timeline({
+    defaults: { overwrite: 'auto', ease: 'sine.inOut' },
+    onComplete: () => {
+      affectedParts.forEach(resetPartToBase);
+      gestureTimeline = null;
+      setActiveButton(null);
+    },
+  });
+
+  build(gestureTimeline);
+  setActiveButton(actionName);
+
+  return gestureTimeline;
+}
+
+function ponder() {
+  const headBase = base('head');
+  const bodyBase = base('body');
+  const rightHandBase = base('rightHand');
+
+  return startGesture('ponder', ['head', 'body', 'rightHand'], (timeline) => {
+    timeline
+      .to(partElements.head, {
+        x: headBase.x + 2,
+        y: headBase.y + 1,
+        rotate: headBase.rotate + 5,
+        duration: 0.35,
+      })
+      .to(
+        partElements.body,
+        {
+          x: bodyBase.x,
+          y: bodyBase.y,
+          rotate: bodyBase.rotate + 0.7,
+          duration: 0.38,
+        },
+        0.08
+      )
+      .to(
+        partElements.rightHand,
+        {
+          x: rightHandBase.x + 2,
+          y: rightHandBase.y - 1,
+          rotate: rightHandBase.rotate + 4,
+          duration: 0.34,
+        },
+        0.12
+      )
+      .to({}, { duration: 0.45 })
+      .to(partElements.head, {
+        x: headBase.x - 1,
+        y: headBase.y,
+        rotate: headBase.rotate - 2,
+        duration: 0.32,
+      })
+      .to({}, { duration: 0.2 })
+      .to(partElements.head, {
+        x: headBase.x,
+        y: headBase.y,
+        rotate: headBase.rotate,
+        duration: 0.3,
+        ease: 'power1.out',
+      })
+      .to(
+        [partElements.body, partElements.rightHand],
+        {
+          x: (index) => (index === 0 ? bodyBase.x : rightHandBase.x),
+          y: (index) => (index === 0 ? bodyBase.y : rightHandBase.y),
+          rotate: (index) => (index === 0 ? bodyBase.rotate : rightHandBase.rotate),
+          duration: 0.3,
+          ease: 'power1.out',
+        },
+        '<'
+      );
+  });
+}
+
+function dance() {
+  const robotBase = base('robot');
+  const headBase = base('head');
+  const leftHandBase = base('leftHand');
+  const rightHandBase = base('rightHand');
+
+  return startGesture('dance', ['robot', 'head', 'leftHand', 'rightHand'], (timeline) => {
+    const sway = (direction) => ({
+      x: robotBase.x + 3 * direction,
+      y: robotBase.y - 2,
+      rotate: robotBase.rotate + 2 * direction,
+      duration: 0.28,
+    });
+
+    timeline
+      .to(robot, sway(-1))
+      .to(
+        partElements.head,
+        {
+          x: headBase.x - 1,
+          y: headBase.y,
+          rotate: headBase.rotate + 3,
+          duration: 0.26,
+        },
+        0.04
+      )
+      .to(
+        [partElements.leftHand, partElements.rightHand],
+        {
+          rotate: (index) => (index === 0 ? leftHandBase.rotate - 5 : rightHandBase.rotate + 5),
+          duration: 0.26,
+        },
+        0.06
+      )
+      .to(robot, sway(1))
+      .to(
+        partElements.head,
+        {
+          x: headBase.x + 1,
+          y: headBase.y,
+          rotate: headBase.rotate - 3,
+          duration: 0.28,
+        },
+        '<'
+      )
+      .to(
+        [partElements.leftHand, partElements.rightHand],
+        {
+          rotate: (index) => (index === 0 ? leftHandBase.rotate + 5 : rightHandBase.rotate - 5),
+          duration: 0.28,
+        },
+        '<'
+      )
+      .to(robot, sway(-1))
+      .to(partElements.head, { x: headBase.x - 1, rotate: headBase.rotate + 2, duration: 0.28 }, '<')
+      .to(robot, {
+        x: robotBase.x,
+        y: robotBase.y,
+        rotate: robotBase.rotate,
+        duration: 0.32,
+        ease: 'power1.out',
+      })
+      .to(
+        partElements.head,
+        {
+          x: headBase.x,
+          y: headBase.y,
+          rotate: headBase.rotate,
+          duration: 0.32,
+          ease: 'power1.out',
+        },
+        '<'
+      )
+      .to(
+        [partElements.leftHand, partElements.rightHand],
+        {
+          rotate: (index) => (index === 0 ? leftHandBase.rotate : rightHandBase.rotate),
+          duration: 0.32,
+          ease: 'power1.out',
+        },
+        '<'
+      );
+  });
+}
+
 function talkStart() {
   stopAllAnimations({ reset: true });
   ensureFloatTimeline();
@@ -1057,6 +1231,8 @@ window.wave = wave;
 window.lookAround = lookAround;
 window.nod = nod;
 window.bounce = bounce;
+window.ponder = ponder;
+window.dance = dance;
 window.startInspiredIdle = startInspiredIdle;
 window.talkStart = talkStart;
 window.talkStop = talkStop;
@@ -1072,6 +1248,8 @@ controls.addEventListener('click', (event) => {
     lookAround,
     nod,
     bounce,
+    ponder,
+    dance,
     talk: talkStart,
     'talk-stop': talkStop,
     stop: stopAllAnimations,
