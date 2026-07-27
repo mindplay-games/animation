@@ -242,11 +242,13 @@ function resetPartToBase(partName, options = {}) {
 function buildFloatTimeline() {
   const timeline = gsap.timeline({
     repeat: -1,
-    yoyo: true,
     defaults: { ease: 'sine.inOut', overwrite: 'auto' },
   });
 
-  timeline.to(robotWrapper, { y: -6, rotate: 1, duration: 2.2 });
+  timeline
+    .to(robotWrapper, { x: 8, y: -14, rotate: 1.5, duration: 1.8 })
+    .to(robotWrapper, { x: -7, y: -8, rotate: -1, duration: 1.7 })
+    .to(robotWrapper, { x: 0, y: 0, rotate: 0, duration: 1.8 });
 
   return timeline;
 }
@@ -668,20 +670,20 @@ function bounce() {
 
   bounceTimeline
     .to(robot, {
-      x: robotBase.x,
-      y: robotBase.y - 8,
-      rotate: robotBase.rotate,
-      duration: 0.3,
+      x: robotBase.x + 4,
+      y: robotBase.y - 18,
+      rotate: robotBase.rotate + 1,
+      duration: 0.34,
       ease: 'sine.out',
     })
     .to(
       '.robot-ground-shadow',
       {
-        scaleX: 0.9,
-        scaleY: 0.86,
-        opacity: 0.65,
-        filter: 'blur(12px)',
-        duration: 0.3,
+        scaleX: 0.82,
+        scaleY: 0.78,
+        opacity: 0.5,
+        filter: 'blur(14px)',
+        duration: 0.34,
         ease: 'sine.out',
       },
       0
@@ -689,28 +691,28 @@ function bounce() {
     .to(
       partElements.head,
       {
-        x: headBase.x,
-        y: headBase.y - 2,
-        rotate: headBase.rotate - 1.5,
-        duration: 0.28,
+        x: headBase.x - 2,
+        y: headBase.y - 4,
+        rotate: headBase.rotate - 2.5,
+        duration: 0.32,
       },
       0.05
     )
     .to(robot, {
-      x: robotBase.x,
-      y: robotBase.y + 2,
-      rotate: robotBase.rotate,
-      duration: 0.28,
+      x: robotBase.x - 2,
+      y: robotBase.y + 3,
+      rotate: robotBase.rotate - 0.6,
+      duration: 0.3,
       ease: 'sine.in',
     })
     .to(
       '.robot-ground-shadow',
       {
-        scaleX: 1.04,
-        scaleY: 1.02,
+        scaleX: 1.08,
+        scaleY: 1.04,
         opacity: 1,
         filter: 'blur(9px)',
-        duration: 0.28,
+        duration: 0.3,
         ease: 'sine.in',
       },
       '<'
@@ -842,54 +844,54 @@ function dance() {
   const rightHandBase = base('rightHand');
 
   return startGesture('dance', ['robot', 'head', 'leftHand', 'rightHand'], (timeline) => {
-    const sway = (direction) => ({
-      x: robotBase.x + 3 * direction,
-      y: robotBase.y - 2,
-      rotate: robotBase.rotate + 2 * direction,
-      duration: 0.28,
+    const sway = (direction, lift) => ({
+      x: robotBase.x + 9 * direction,
+      y: robotBase.y + lift,
+      rotate: robotBase.rotate + 3.5 * direction,
+      duration: 0.34,
     });
 
     timeline
-      .to(robot, sway(-1))
+      .to(robot, sway(-1, -6))
       .to(
         partElements.head,
         {
-          x: headBase.x - 1,
-          y: headBase.y,
-          rotate: headBase.rotate + 3,
-          duration: 0.26,
+          x: headBase.x - 2,
+          y: headBase.y - 2,
+          rotate: headBase.rotate + 4,
+          duration: 0.32,
         },
         0.04
       )
       .to(
         [partElements.leftHand, partElements.rightHand],
         {
-          rotate: (index) => (index === 0 ? leftHandBase.rotate - 5 : rightHandBase.rotate + 5),
-          duration: 0.26,
+          rotate: (index) => (index === 0 ? leftHandBase.rotate - 8 : rightHandBase.rotate + 8),
+          duration: 0.32,
         },
         0.06
       )
-      .to(robot, sway(1))
+      .to(robot, sway(1, 1))
       .to(
         partElements.head,
         {
-          x: headBase.x + 1,
-          y: headBase.y,
-          rotate: headBase.rotate - 3,
-          duration: 0.28,
+          x: headBase.x + 2,
+          y: headBase.y + 1,
+          rotate: headBase.rotate - 4,
+          duration: 0.34,
         },
         '<'
       )
       .to(
         [partElements.leftHand, partElements.rightHand],
         {
-          rotate: (index) => (index === 0 ? leftHandBase.rotate + 5 : rightHandBase.rotate - 5),
-          duration: 0.28,
+          rotate: (index) => (index === 0 ? leftHandBase.rotate + 8 : rightHandBase.rotate - 8),
+          duration: 0.34,
         },
         '<'
       )
-      .to(robot, sway(-1))
-      .to(partElements.head, { x: headBase.x - 1, rotate: headBase.rotate + 2, duration: 0.28 }, '<')
+      .to(robot, sway(-1, -4))
+      .to(partElements.head, { x: headBase.x - 2, y: headBase.y - 1, rotate: headBase.rotate + 3, duration: 0.34 }, '<')
       .to(robot, {
         x: robotBase.x,
         y: robotBase.y,
