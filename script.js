@@ -136,6 +136,10 @@ let floatTimeline;
 let inspiredTimeline;
 let talkTimeline;
 let waveTimeline;
+let lookAroundTimeline;
+let nodTimeline;
+let bounceTimeline;
+let gestureTimeline;
 let debugPanel;
 
 function splitTransformOrigin(transformOrigin) {
@@ -238,11 +242,13 @@ function resetPartToBase(partName, options = {}) {
 function buildFloatTimeline() {
   const timeline = gsap.timeline({
     repeat: -1,
-    yoyo: true,
     defaults: { ease: 'sine.inOut', overwrite: 'auto' },
   });
 
-  timeline.to(robotWrapper, { y: -6, rotate: 1, duration: 2.2 });
+  timeline
+    .to(robotWrapper, { x: 8, y: -14, rotate: 1.5, duration: 1.8 })
+    .to(robotWrapper, { x: -7, y: -8, rotate: -1, duration: 1.7 })
+    .to(robotWrapper, { x: 0, y: 0, rotate: 0, duration: 1.8 });
 
   return timeline;
 }
@@ -319,6 +325,10 @@ function pauseAnimations() {
   inspiredTimeline?.pause();
   talkTimeline?.pause();
   waveTimeline?.pause();
+  lookAroundTimeline?.pause();
+  nodTimeline?.pause();
+  bounceTimeline?.pause();
+  gestureTimeline?.pause();
   floatTimeline?.pause();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.pause());
 }
@@ -328,6 +338,10 @@ function resumeAnimations() {
   inspiredTimeline?.resume();
   talkTimeline?.resume();
   waveTimeline?.resume();
+  lookAroundTimeline?.resume();
+  nodTimeline?.resume();
+  bounceTimeline?.resume();
+  gestureTimeline?.resume();
   floatTimeline?.resume();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.resume());
 }
@@ -346,9 +360,17 @@ function stopAllAnimations({ reset = true } = {}) {
 
   talkTimeline?.kill();
   waveTimeline?.kill();
+  lookAroundTimeline?.kill();
+  nodTimeline?.kill();
+  bounceTimeline?.kill();
+  gestureTimeline?.kill();
 
   talkTimeline = null;
   waveTimeline = null;
+  lookAroundTimeline = null;
+  nodTimeline = null;
+  bounceTimeline = null;
+  gestureTimeline = null;
 
   gsap.killTweensOf([...ANIMATED_PARTS, '.robot-ground-shadow']);
 
@@ -461,6 +483,443 @@ function wave() {
   setActiveButton('wave');
 
   return waveTimeline;
+}
+
+function lookAround() {
+  lookAroundTimeline?.kill();
+  lookAroundTimeline = null;
+
+  stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
+
+  const head = partElements.head;
+  const body = partElements.body;
+  const headBase = base('head');
+  const bodyBase = base('body');
+
+  lookAroundTimeline = gsap.timeline({
+    defaults: {
+      overwrite: 'auto',
+      ease: 'sine.inOut',
+    },
+    onComplete: () => {
+      resetPartToBase('head');
+      resetPartToBase('body');
+      lookAroundTimeline = null;
+      setActiveButton(null);
+    },
+  });
+
+  lookAroundTimeline
+    .to(head, {
+      x: headBase.x - 3,
+      y: headBase.y,
+      rotate: headBase.rotate - 5,
+      duration: 0.28,
+    })
+    .to(
+      body,
+      {
+        x: bodyBase.x,
+        y: bodyBase.y,
+        rotate: bodyBase.rotate - 0.8,
+        duration: 0.3,
+      },
+      0.08
+    )
+    .to({}, { duration: 0.18 })
+    .to(head, {
+      x: headBase.x + 3,
+      y: headBase.y,
+      rotate: headBase.rotate + 5,
+      duration: 0.42,
+    })
+    .to(
+      body,
+      {
+        x: bodyBase.x,
+        y: bodyBase.y,
+        rotate: bodyBase.rotate + 0.8,
+        duration: 0.4,
+      },
+      '<0.06'
+    )
+    .to({}, { duration: 0.18 })
+    .to(head, {
+      x: headBase.x,
+      y: headBase.y,
+      rotate: headBase.rotate,
+      duration: 0.3,
+      ease: 'power1.out',
+    })
+    .to(
+      body,
+      {
+        x: bodyBase.x,
+        y: bodyBase.y,
+        rotate: bodyBase.rotate,
+        duration: 0.3,
+        ease: 'power1.out',
+      },
+      '<'
+    );
+
+  setActiveButton('lookAround');
+
+  return lookAroundTimeline;
+}
+
+function nod() {
+  nodTimeline?.kill();
+  nodTimeline = null;
+
+  stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
+
+  const headBase = base('head');
+  const bodyBase = base('body');
+
+  nodTimeline = gsap.timeline({
+    defaults: { overwrite: 'auto', ease: 'sine.inOut' },
+    onComplete: () => {
+      resetPartToBase('head');
+      resetPartToBase('body');
+      nodTimeline = null;
+      setActiveButton(null);
+    },
+  });
+
+  nodTimeline
+    .to(partElements.head, {
+      x: headBase.x,
+      y: headBase.y + 3,
+      rotate: headBase.rotate + 4,
+      duration: 0.22,
+    })
+    .to(
+      partElements.body,
+      {
+        x: bodyBase.x,
+        y: bodyBase.y + 1,
+        rotate: bodyBase.rotate + 0.5,
+        duration: 0.24,
+      },
+      0.06
+    )
+    .to(partElements.head, {
+      x: headBase.x,
+      y: headBase.y - 1,
+      rotate: headBase.rotate - 2,
+      duration: 0.25,
+    })
+    .to(partElements.head, {
+      x: headBase.x,
+      y: headBase.y + 2,
+      rotate: headBase.rotate + 3,
+      duration: 0.2,
+    })
+    .to(partElements.head, {
+      x: headBase.x,
+      y: headBase.y,
+      rotate: headBase.rotate,
+      duration: 0.28,
+      ease: 'power1.out',
+    })
+    .to(
+      partElements.body,
+      {
+        x: bodyBase.x,
+        y: bodyBase.y,
+        rotate: bodyBase.rotate,
+        duration: 0.28,
+        ease: 'power1.out',
+      },
+      '<'
+    );
+
+  setActiveButton('nod');
+
+  return nodTimeline;
+}
+
+function bounce() {
+  bounceTimeline?.kill();
+  bounceTimeline = null;
+
+  stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
+
+  const robotBase = base('robot');
+  const headBase = base('head');
+
+  bounceTimeline = gsap.timeline({
+    defaults: { overwrite: 'auto', ease: 'sine.inOut' },
+    onComplete: () => {
+      resetPartToBase('robot');
+      resetPartToBase('head');
+      gsap.set('.robot-ground-shadow', {
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 1,
+        filter: 'blur(10px)',
+      });
+      bounceTimeline = null;
+      setActiveButton(null);
+    },
+  });
+
+  bounceTimeline
+    .to(robot, {
+      x: robotBase.x + 4,
+      y: robotBase.y - 18,
+      rotate: robotBase.rotate + 1,
+      duration: 0.34,
+      ease: 'sine.out',
+    })
+    .to(
+      '.robot-ground-shadow',
+      {
+        scaleX: 0.82,
+        scaleY: 0.78,
+        opacity: 0.5,
+        filter: 'blur(14px)',
+        duration: 0.34,
+        ease: 'sine.out',
+      },
+      0
+    )
+    .to(
+      partElements.head,
+      {
+        x: headBase.x - 2,
+        y: headBase.y - 4,
+        rotate: headBase.rotate - 2.5,
+        duration: 0.32,
+      },
+      0.05
+    )
+    .to(robot, {
+      x: robotBase.x - 2,
+      y: robotBase.y + 3,
+      rotate: robotBase.rotate - 0.6,
+      duration: 0.3,
+      ease: 'sine.in',
+    })
+    .to(
+      '.robot-ground-shadow',
+      {
+        scaleX: 1.08,
+        scaleY: 1.04,
+        opacity: 1,
+        filter: 'blur(9px)',
+        duration: 0.3,
+        ease: 'sine.in',
+      },
+      '<'
+    )
+    .to(robot, {
+      x: robotBase.x,
+      y: robotBase.y,
+      rotate: robotBase.rotate,
+      duration: 0.24,
+      ease: 'power1.out',
+    })
+    .to(
+      partElements.head,
+      {
+        x: headBase.x,
+        y: headBase.y,
+        rotate: headBase.rotate,
+        duration: 0.24,
+        ease: 'power1.out',
+      },
+      '<'
+    )
+    .to(
+      '.robot-ground-shadow',
+      {
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 1,
+        filter: 'blur(10px)',
+        duration: 0.24,
+        ease: 'power1.out',
+      },
+      '<'
+    );
+
+  setActiveButton('bounce');
+
+  return bounceTimeline;
+}
+
+function startGesture(actionName, affectedParts, build) {
+  gestureTimeline?.kill();
+  gestureTimeline = null;
+
+  stopAllAnimations({ reset: true });
+  ensureFloatTimeline();
+
+  gestureTimeline = gsap.timeline({
+    defaults: { overwrite: 'auto', ease: 'sine.inOut' },
+    onComplete: () => {
+      affectedParts.forEach(resetPartToBase);
+      gestureTimeline = null;
+      setActiveButton(null);
+    },
+  });
+
+  build(gestureTimeline);
+  setActiveButton(actionName);
+
+  return gestureTimeline;
+}
+
+function ponder() {
+  const headBase = base('head');
+  const bodyBase = base('body');
+  const rightHandBase = base('rightHand');
+
+  return startGesture('ponder', ['head', 'body', 'rightHand'], (timeline) => {
+    timeline
+      .to(partElements.head, {
+        x: headBase.x + 2,
+        y: headBase.y + 1,
+        rotate: headBase.rotate + 5,
+        duration: 0.35,
+      })
+      .to(
+        partElements.body,
+        {
+          x: bodyBase.x,
+          y: bodyBase.y,
+          rotate: bodyBase.rotate + 0.7,
+          duration: 0.38,
+        },
+        0.08
+      )
+      .to(
+        partElements.rightHand,
+        {
+          x: rightHandBase.x + 2,
+          y: rightHandBase.y - 1,
+          rotate: rightHandBase.rotate + 4,
+          duration: 0.34,
+        },
+        0.12
+      )
+      .to({}, { duration: 0.45 })
+      .to(partElements.head, {
+        x: headBase.x - 1,
+        y: headBase.y,
+        rotate: headBase.rotate - 2,
+        duration: 0.32,
+      })
+      .to({}, { duration: 0.2 })
+      .to(partElements.head, {
+        x: headBase.x,
+        y: headBase.y,
+        rotate: headBase.rotate,
+        duration: 0.3,
+        ease: 'power1.out',
+      })
+      .to(
+        [partElements.body, partElements.rightHand],
+        {
+          x: (index) => (index === 0 ? bodyBase.x : rightHandBase.x),
+          y: (index) => (index === 0 ? bodyBase.y : rightHandBase.y),
+          rotate: (index) => (index === 0 ? bodyBase.rotate : rightHandBase.rotate),
+          duration: 0.3,
+          ease: 'power1.out',
+        },
+        '<'
+      );
+  });
+}
+
+function dance() {
+  const robotBase = base('robot');
+  const headBase = base('head');
+  const leftHandBase = base('leftHand');
+  const rightHandBase = base('rightHand');
+
+  return startGesture('dance', ['robot', 'head', 'leftHand', 'rightHand'], (timeline) => {
+    const sway = (direction, lift) => ({
+      x: robotBase.x + 9 * direction,
+      y: robotBase.y + lift,
+      rotate: robotBase.rotate + 3.5 * direction,
+      duration: 0.34,
+    });
+
+    timeline
+      .to(robot, sway(-1, -6))
+      .to(
+        partElements.head,
+        {
+          x: headBase.x - 2,
+          y: headBase.y - 2,
+          rotate: headBase.rotate + 4,
+          duration: 0.32,
+        },
+        0.04
+      )
+      .to(
+        [partElements.leftHand, partElements.rightHand],
+        {
+          rotate: (index) => (index === 0 ? leftHandBase.rotate - 8 : rightHandBase.rotate + 8),
+          duration: 0.32,
+        },
+        0.06
+      )
+      .to(robot, sway(1, 1))
+      .to(
+        partElements.head,
+        {
+          x: headBase.x + 2,
+          y: headBase.y + 1,
+          rotate: headBase.rotate - 4,
+          duration: 0.34,
+        },
+        '<'
+      )
+      .to(
+        [partElements.leftHand, partElements.rightHand],
+        {
+          rotate: (index) => (index === 0 ? leftHandBase.rotate + 8 : rightHandBase.rotate - 8),
+          duration: 0.34,
+        },
+        '<'
+      )
+      .to(robot, sway(-1, -4))
+      .to(partElements.head, { x: headBase.x - 2, y: headBase.y - 1, rotate: headBase.rotate + 3, duration: 0.34 }, '<')
+      .to(robot, {
+        x: robotBase.x,
+        y: robotBase.y,
+        rotate: robotBase.rotate,
+        duration: 0.32,
+        ease: 'power1.out',
+      })
+      .to(
+        partElements.head,
+        {
+          x: headBase.x,
+          y: headBase.y,
+          rotate: headBase.rotate,
+          duration: 0.32,
+          ease: 'power1.out',
+        },
+        '<'
+      )
+      .to(
+        [partElements.leftHand, partElements.rightHand],
+        {
+          rotate: (index) => (index === 0 ? leftHandBase.rotate : rightHandBase.rotate),
+          duration: 0.32,
+          ease: 'power1.out',
+        },
+        '<'
+      );
+  });
 }
 
 function talkStart() {
@@ -771,6 +1230,11 @@ window.startIdle = startIdle;
 window.stopIdle = stopIdle;
 window.stopAllAnimations = stopAllAnimations;
 window.wave = wave;
+window.lookAround = lookAround;
+window.nod = nod;
+window.bounce = bounce;
+window.ponder = ponder;
+window.dance = dance;
 window.startInspiredIdle = startInspiredIdle;
 window.talkStart = talkStart;
 window.talkStop = talkStop;
@@ -783,6 +1247,11 @@ controls.addEventListener('click', (event) => {
     idle: startIdle,
     inspired: startInspiredIdle,
     wave,
+    lookAround,
+    nod,
+    bounce,
+    ponder,
+    dance,
     talk: talkStart,
     'talk-stop': talkStop,
     stop: stopAllAnimations,
