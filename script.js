@@ -140,6 +140,7 @@ let lookAroundTimeline;
 let nodTimeline;
 let bounceTimeline;
 let gestureTimeline;
+let floatWaveAndSwayTimeline;
 let debugPanel;
 
 function splitTransformOrigin(transformOrigin) {
@@ -329,6 +330,7 @@ function pauseAnimations() {
   nodTimeline?.pause();
   bounceTimeline?.pause();
   gestureTimeline?.pause();
+  floatWaveAndSwayTimeline?.pause();
   floatTimeline?.pause();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.pause());
 }
@@ -342,6 +344,7 @@ function resumeAnimations() {
   nodTimeline?.resume();
   bounceTimeline?.resume();
   gestureTimeline?.resume();
+  floatWaveAndSwayTimeline?.resume();
   floatTimeline?.resume();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.resume());
 }
@@ -355,6 +358,7 @@ function setActiveButton(actionName) {
 }
 
 function stopAllAnimations({ reset = true } = {}) {
+  floatTimeline?.pause(0);
   idleTimeline?.pause(0);
   inspiredTimeline?.pause(0);
 
@@ -364,6 +368,7 @@ function stopAllAnimations({ reset = true } = {}) {
   nodTimeline?.kill();
   bounceTimeline?.kill();
   gestureTimeline?.kill();
+  floatWaveAndSwayTimeline?.kill();
 
   talkTimeline = null;
   waveTimeline = null;
@@ -371,11 +376,13 @@ function stopAllAnimations({ reset = true } = {}) {
   nodTimeline = null;
   bounceTimeline = null;
   gestureTimeline = null;
+  floatWaveAndSwayTimeline = null;
 
-  gsap.killTweensOf([...ANIMATED_PARTS, '.robot-ground-shadow']);
+  gsap.killTweensOf([...ANIMATED_PARTS, robotWrapper, '.robot-ground-shadow']);
 
   if (reset) {
     applyRobotConfig();
+    gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1 });
     gsap.set('.robot-ground-shadow', {
       scaleX: 1,
       scaleY: 1,
@@ -385,6 +392,54 @@ function stopAllAnimations({ reset = true } = {}) {
   }
 
   setActiveButton(null);
+}
+
+function floatWaveAndSway() {
+  stopAllAnimations({ reset: true });
+
+  const handBase = base('rightHand');
+  const headBase = base('head');
+  const hand = partElements.rightHand;
+  const head = partElements.head;
+  const shadow = '.robot-ground-shadow';
+
+  const restoreSequencePose = () => {
+    resetPartToBase('rightHand');
+    resetPartToBase('head');
+    gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1 });
+    gsap.set(shadow, { scaleX: 1, scaleY: 1, opacity: 1, filter: 'blur(10px)' });
+  };
+
+  floatWaveAndSwayTimeline = gsap.timeline({
+    defaults: { overwrite: 'auto', ease: 'sine.inOut' },
+    onComplete: () => {
+      restoreSequencePose();
+      floatWaveAndSwayTimeline = null;
+      setActiveButton(null);
+    },
+  });
+
+  floatWaveAndSwayTimeline
+    // Lift the connected character as one unit and soften its shadow.
+    .to(robotWrapper, { y: -6, duration: 0.55, ease: 'sine.out' })
+    .to(shadow, { scaleX: 0.9, scaleY: 0.88, opacity: 0.72, filter: 'blur(12px)', duration: 0.55, ease: 'sine.out' }, 0)
+    // Raise from the configured shoulder, then make three small wave beats.
+    .to(hand, { x: handBase.x + 2, y: handBase.y - 4, rotate: handBase.rotate - 10, duration: 0.3 })
+    .to(head, { x: headBase.x, y: headBase.y - 1, rotate: headBase.rotate + 1.5, duration: 0.28 }, '<0.04')
+    .to(hand, { rotate: handBase.rotate + 9, duration: 0.2 })
+    .to(hand, { rotate: handBase.rotate - 9, duration: 0.2 })
+    .to(hand, { rotate: handBase.rotate + 8, duration: 0.2 })
+    .to(hand, { x: handBase.x, y: handBase.y, rotate: handBase.rotate, duration: 0.34 })
+    .to(head, { x: headBase.x, y: headBase.y, rotate: headBase.rotate, duration: 0.3 }, '<')
+    // Sway the wrapper so every SVG part travels together.
+    .to(robotWrapper, { x: 14, y: -4, rotate: 1.2, duration: 0.65 })
+    .to(robotWrapper, { x: -14, y: -4, rotate: -1.2, duration: 0.85 })
+    .to(robotWrapper, { x: 6, y: -3, rotate: 0.6, duration: 0.55 })
+    .to(robotWrapper, { x: 0, y: 0, rotate: 0, duration: 0.65 })
+    .to(shadow, { scaleX: 1, scaleY: 1, opacity: 1, filter: 'blur(10px)', duration: 0.65 }, '<');
+
+  setActiveButton('floatWaveAndSway');
+  return floatWaveAndSwayTimeline;
 }
 
 function startIdle() {
@@ -1230,6 +1285,7 @@ window.startIdle = startIdle;
 window.stopIdle = stopIdle;
 window.stopAllAnimations = stopAllAnimations;
 window.wave = wave;
+window.floatWaveAndSway = floatWaveAndSway;
 window.lookAround = lookAround;
 window.nod = nod;
 window.bounce = bounce;
@@ -1247,6 +1303,7 @@ controls.addEventListener('click', (event) => {
     idle: startIdle,
     inspired: startInspiredIdle,
     wave,
+    floatWaveAndSway,
     lookAround,
     nod,
     bounce,
