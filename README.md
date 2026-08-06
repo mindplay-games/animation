@@ -24,6 +24,10 @@ Keep the SVG files in the `assets/` folder with the exact filenames above. The `
 
 A Hebrew summary of the animation principles, fixes, and lessons learned for keeping the character balanced, natural, structurally logical, and free from body-part distortion is available in [`docs/animation-guidelines-he.md`](docs/animation-guidelines-he.md).
 
+## Reusing the character in another project
+
+The self-contained [`portable-robot/`](portable-robot/) package includes the six SVG assets, scoped character-only CSS, a reusable animation runtime, and a complete English integration guide. It can be copied without the demo page, background, controls, debug tools, or animation editor.
+
 ## Local preview
 
 Run a local static server from the repository root:
