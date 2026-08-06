@@ -6,7 +6,7 @@ const ROBOT_CONFIG = {
     x: 0,
     y: 0,
     rotate: -7,
-    scale: 0.82,
+    scale: 0.41,
     scaleX: 1,
     scaleY: 1,
     transformOrigin: '50% 56%',
