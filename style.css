@@ -25,14 +25,14 @@ body {
 
 .stage {
   position: relative;
-  width: min(100vw, 900px);
+  width: 100vw;
   min-height: 100vh;
   display: grid;
   place-items: center;
   align-content: center;
   gap: 1.25rem;
   padding: 6rem 2rem 2rem;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .robot-ground-shadow {
