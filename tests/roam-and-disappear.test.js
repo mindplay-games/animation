@@ -14,15 +14,24 @@ test('registers the roam and disappear control and public action', () => {
 
 test('uses responsive stage bounds for a multi-point journey', () => {
   assert.match(animation, /getBoundingClientRect\(\)/);
+  assert.match(animation, /robot\.getBoundingClientRect\(\)/);
   assert.match(animation, /horizontalRange/);
   assert.match(animation, /verticalRange/);
-  assert.ok((animation.match(/\.to\(robotWrapper/g) ?? []).length >= 4);
+  assert.equal((animation.match(/\.to\(robotWrapper/g) ?? []).length, 7);
 });
 
-test('keeps the roaming journey slow and easy to follow', () => {
+test('runs at half the previous speed', () => {
   const wrapperDurations = [...animation.matchAll(/\.to\(robotWrapper, \{[\s\S]*?duration: ([\d.]+)/g)].map((match) => Number(match[1]));
-  assert.deepEqual(wrapperDurations, [1.6, 2.1, 1.8, 1.5]);
-  assert.ok(wrapperDurations.reduce((total, duration) => total + duration, 0) >= 7);
+  assert.deepEqual(wrapperDurations, [2.2, 2, 2.1, 2.2, 2, 1.8, 1.7]);
+  assert.equal(wrapperDurations.reduce((total, duration) => total + duration, 0), 14);
+});
+
+test('follows the requested lower-right loop and disappears in the upper-right', () => {
+  assert.match(animation, /x: horizontalRange \* 0\.56, y: verticalRange \* 0\.88/);
+  assert.match(animation, /x: horizontalRange \* 0\.94, y: verticalRange \* 0\.55/);
+  assert.match(animation, /x: horizontalRange \* 0\.3, y: -verticalRange \* 0\.08/);
+  assert.match(animation, /x: horizontalRange \* 0\.68, y: -verticalRange \* 0\.78/);
+  assert.match(animation, /x: horizontalRange \* 0\.96,[\s\S]*?y: -verticalRange \* 0\.72,[\s\S]*?opacity: 0/);
 });
 
 test('fades the robot and its shadow at the end', () => {

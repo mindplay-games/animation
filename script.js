@@ -405,9 +405,9 @@ function roamAndDisappear() {
   stopAllAnimations({ reset: true });
 
   const stageBounds = document.querySelector('.stage').getBoundingClientRect();
-  const robotBounds = robotWrapper.getBoundingClientRect();
-  const horizontalRange = Math.max(28, (stageBounds.width - robotBounds.width) / 2 - 12);
-  const verticalRange = Math.max(30, (stageBounds.height - robotBounds.height) / 2 - 36);
+  const robotBounds = robot.getBoundingClientRect();
+  const horizontalRange = Math.max(28, (stageBounds.width - robotBounds.width) / 2 - 24);
+  const verticalRange = Math.max(30, (stageBounds.height - robotBounds.height) / 2 - 48);
   const shadow = '.robot-ground-shadow';
 
   roamAndDisappearTimeline = gsap.timeline({
@@ -419,23 +419,31 @@ function roamAndDisappear() {
   });
 
   roamAndDisappearTimeline
-    .to(robotWrapper, { x: -horizontalRange * 0.72, y: -verticalRange * 0.42, rotate: -8, duration: 1.6 })
-    .to(shadow, { x: -horizontalRange * 0.72, scaleX: 0.76, opacity: 0.42, duration: 1.6 }, 0)
-    .to(robotWrapper, { x: horizontalRange, y: verticalRange * 0.18, rotate: 9, duration: 2.1 })
-    .to(shadow, { x: horizontalRange, scaleX: 0.9, opacity: 0.55, duration: 2.1 }, '<')
-    .to(robotWrapper, { x: -horizontalRange * 0.35, y: -verticalRange, rotate: -5, duration: 1.8 })
-    .to(shadow, { x: -horizontalRange * 0.35, scaleX: 0.52, opacity: 0.24, duration: 1.8 }, '<')
+    // Enter the marked route at the lower-right, then follow its wide upward loop.
+    .to(robotWrapper, { x: horizontalRange * 0.56, y: verticalRange * 0.88, rotate: 7, duration: 2.2 })
+    .to(shadow, { x: horizontalRange * 0.56, scaleX: 0.94, opacity: 0.58, duration: 2.2 }, 0)
+    .to(robotWrapper, { x: horizontalRange * 0.94, y: verticalRange * 0.55, rotate: -5, duration: 2 })
+    .to(shadow, { x: horizontalRange * 0.94, scaleX: 0.86, opacity: 0.5, duration: 2 }, '<')
+    .to(robotWrapper, { x: horizontalRange * 0.74, y: verticalRange * 0.08, rotate: -9, duration: 2.1 })
+    .to(shadow, { x: horizontalRange * 0.74, scaleX: 0.72, opacity: 0.4, duration: 2.1 }, '<')
+    .to(robotWrapper, { x: horizontalRange * 0.3, y: -verticalRange * 0.08, rotate: -4, duration: 2.2 })
+    .to(shadow, { x: horizontalRange * 0.3, scaleX: 0.64, opacity: 0.34, duration: 2.2 }, '<')
+    .to(robotWrapper, { x: horizontalRange * 0.4, y: -verticalRange * 0.4, rotate: 7, duration: 2 })
+    .to(shadow, { x: horizontalRange * 0.4, scaleX: 0.5, opacity: 0.26, duration: 2 }, '<')
+    .to(robotWrapper, { x: horizontalRange * 0.68, y: -verticalRange * 0.78, rotate: 5, duration: 1.8 })
+    .to(shadow, { x: horizontalRange * 0.68, scaleX: 0.34, opacity: 0.16, duration: 1.8 }, '<')
+    // Finish inside the marked upper-right disappearance area.
     .to(robotWrapper, {
-      x: horizontalRange * 0.82,
-      y: -verticalRange * 0.55,
-      rotate: 12,
+      x: horizontalRange * 0.96,
+      y: -verticalRange * 0.72,
+      rotate: 8,
       scaleX: 0.72,
       scaleY: 0.72,
       opacity: 0,
-      duration: 1.5,
+      duration: 1.7,
       ease: 'power2.in',
     })
-    .to(shadow, { x: horizontalRange * 0.82, scaleX: 0.15, scaleY: 0.3, opacity: 0, duration: 1.2 }, '<0.3');
+    .to(shadow, { x: horizontalRange * 0.96, scaleX: 0.15, scaleY: 0.3, opacity: 0, duration: 1.4 }, '<0.3');
 
   setActiveButton('roamAndDisappear');
   return roamAndDisappearTimeline;
