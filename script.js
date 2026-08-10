@@ -409,33 +409,34 @@ function roamAndDisappear() {
   const horizontalRange = Math.max(28, (stageBounds.width - robotBounds.width) / 2 - 24);
   const verticalRange = Math.max(30, (stageBounds.height - robotBounds.height) / 2 - 48);
   const shadow = '.robot-ground-shadow';
+  const leftHandBase = base('leftHand');
+  const rightHandBase = base('rightHand');
+  const leftLegBase = base('leftLeg');
+  const rightLegBase = base('rightLeg');
 
   roamAndDisappearTimeline = gsap.timeline({
     defaults: { overwrite: 'auto', ease: 'sine.inOut' },
     onComplete: () => {
+      ['leftHand', 'rightHand', 'leftLeg', 'rightLeg'].forEach(resetPartToBase);
       roamAndDisappearTimeline = null;
       setActiveButton(null);
     },
   });
 
   roamAndDisappearTimeline
-    // Enter the marked route at the lower-right, then follow its wide upward loop.
-    .to(robotWrapper, { x: horizontalRange * 0.56, y: verticalRange * 0.88, rotate: 7, duration: 2.2 })
-    .to(shadow, { x: horizontalRange * 0.56, scaleX: 0.94, opacity: 0.58, duration: 2.2 }, 0)
-    .to(robotWrapper, { x: horizontalRange * 0.94, y: verticalRange * 0.55, rotate: -5, duration: 2 })
-    .to(shadow, { x: horizontalRange * 0.94, scaleX: 0.86, opacity: 0.5, duration: 2 }, '<')
-    .to(robotWrapper, { x: horizontalRange * 0.74, y: verticalRange * 0.08, rotate: -9, duration: 2.1 })
-    .to(shadow, { x: horizontalRange * 0.74, scaleX: 0.72, opacity: 0.4, duration: 2.1 }, '<')
-    .to(robotWrapper, { x: horizontalRange * 0.3, y: -verticalRange * 0.08, rotate: -4, duration: 2.2 })
-    .to(shadow, { x: horizontalRange * 0.3, scaleX: 0.64, opacity: 0.34, duration: 2.2 }, '<')
-    .to(robotWrapper, { x: horizontalRange * 0.4, y: -verticalRange * 0.4, rotate: 7, duration: 2 })
-    .to(shadow, { x: horizontalRange * 0.4, scaleX: 0.5, opacity: 0.26, duration: 2 }, '<')
-    .to(robotWrapper, { x: horizontalRange * 0.68, y: -verticalRange * 0.78, rotate: 5, duration: 1.8 })
-    .to(shadow, { x: horizontalRange * 0.68, scaleX: 0.34, opacity: 0.16, duration: 1.8 }, '<')
+    // Join the same right-side curve later so the route is shorter without increasing its speed.
+    .to(robotWrapper, { x: horizontalRange * 0.68, y: verticalRange * 0.58, rotate: 7, duration: 2.2 })
+    .to(shadow, { x: horizontalRange * 0.68, scaleX: 0.9, opacity: 0.54, duration: 2.2 }, 0)
+    .to(robotWrapper, { x: horizontalRange * 0.82, y: verticalRange * 0.15, rotate: -7, duration: 2.1 })
+    .to(shadow, { x: horizontalRange * 0.82, scaleX: 0.76, opacity: 0.43, duration: 2.1 }, '<')
+    .to(robotWrapper, { x: horizontalRange * 0.42, y: -verticalRange * 0.08, rotate: -4, duration: 2.2 })
+    .to(shadow, { x: horizontalRange * 0.42, scaleX: 0.62, opacity: 0.33, duration: 2.2 }, '<')
+    .to(robotWrapper, { x: horizontalRange * 0.58, y: -verticalRange * 0.48, rotate: 6, duration: 2 })
+    .to(shadow, { x: horizontalRange * 0.58, scaleX: 0.42, opacity: 0.22, duration: 2 }, '<')
     // Finish inside the marked upper-right disappearance area.
     .to(robotWrapper, {
-      x: horizontalRange * 0.96,
-      y: -verticalRange * 0.72,
+      x: horizontalRange * 0.92,
+      y: -verticalRange * 0.7,
       rotate: 8,
       scaleX: 0.72,
       scaleY: 0.72,
@@ -443,7 +444,12 @@ function roamAndDisappear() {
       duration: 1.7,
       ease: 'power2.in',
     })
-    .to(shadow, { x: horizontalRange * 0.96, scaleX: 0.15, scaleY: 0.3, opacity: 0, duration: 1.4 }, '<0.3');
+    .to(shadow, { x: horizontalRange * 0.92, scaleX: 0.15, scaleY: 0.3, opacity: 0, duration: 1.4 }, '<0.3')
+    // Let the limbs trail the body with small alternating motions throughout the flight.
+    .to(partElements.leftHand, { rotate: leftHandBase.rotate - 8, y: leftHandBase.y - 2, duration: 0.85, repeat: 11, yoyo: true }, 0)
+    .to(partElements.rightHand, { rotate: rightHandBase.rotate + 6, y: rightHandBase.y + 2, duration: 1.02, repeat: 9, yoyo: true }, 0)
+    .to(partElements.leftLeg, { rotate: leftLegBase.rotate - 7, x: leftLegBase.x - 2, duration: 0.85, repeat: 11, yoyo: true }, 0)
+    .to(partElements.rightLeg, { rotate: rightLegBase.rotate + 7, x: rightLegBase.x + 2, duration: 1.02, repeat: 9, yoyo: true }, 0);
 
   setActiveButton('roamAndDisappear');
   return roamAndDisappearTimeline;

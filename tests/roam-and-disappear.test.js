@@ -17,21 +17,27 @@ test('uses responsive stage bounds for a multi-point journey', () => {
   assert.match(animation, /robot\.getBoundingClientRect\(\)/);
   assert.match(animation, /horizontalRange/);
   assert.match(animation, /verticalRange/);
-  assert.equal((animation.match(/\.to\(robotWrapper/g) ?? []).length, 7);
+  assert.equal((animation.match(/\.to\(robotWrapper/g) ?? []).length, 5);
 });
 
-test('runs at half the previous speed', () => {
+test('keeps the previous speed while shortening the route', () => {
   const wrapperDurations = [...animation.matchAll(/\.to\(robotWrapper, \{[\s\S]*?duration: ([\d.]+)/g)].map((match) => Number(match[1]));
-  assert.deepEqual(wrapperDurations, [2.2, 2, 2.1, 2.2, 2, 1.8, 1.7]);
-  assert.equal(wrapperDurations.reduce((total, duration) => total + duration, 0), 14);
+  assert.deepEqual(wrapperDurations, [2.2, 2.1, 2.2, 2, 1.7]);
+  assert.equal(wrapperDurations.reduce((total, duration) => total + duration, 0), 10.2);
 });
 
-test('follows the requested lower-right loop and disappears in the upper-right', () => {
-  assert.match(animation, /x: horizontalRange \* 0\.56, y: verticalRange \* 0\.88/);
-  assert.match(animation, /x: horizontalRange \* 0\.94, y: verticalRange \* 0\.55/);
-  assert.match(animation, /x: horizontalRange \* 0\.3, y: -verticalRange \* 0\.08/);
-  assert.match(animation, /x: horizontalRange \* 0\.68, y: -verticalRange \* 0\.78/);
-  assert.match(animation, /x: horizontalRange \* 0\.96,[\s\S]*?y: -verticalRange \* 0\.72,[\s\S]*?opacity: 0/);
+test('follows a shorter right-side curve and disappears in the upper-right', () => {
+  assert.match(animation, /x: horizontalRange \* 0\.68, y: verticalRange \* 0\.58/);
+  assert.match(animation, /x: horizontalRange \* 0\.82, y: verticalRange \* 0\.15/);
+  assert.match(animation, /x: horizontalRange \* 0\.42, y: -verticalRange \* 0\.08/);
+  assert.match(animation, /x: horizontalRange \* 0\.92,[\s\S]*?y: -verticalRange \* 0\.7,[\s\S]*?opacity: 0/);
+});
+
+test('adds subtle alternating arm and leg motion during the flight', () => {
+  ['leftHand', 'rightHand', 'leftLeg', 'rightLeg'].forEach((part) => {
+    assert.match(animation, new RegExp(`partElements\\.${part}[^}]*repeat: \\d+[^}]*yoyo: true`));
+  });
+  assert.match(animation, /\['leftHand', 'rightHand', 'leftLeg', 'rightLeg'\]\.forEach\(resetPartToBase\)/);
 });
 
 test('fades the robot and its shadow at the end', () => {
