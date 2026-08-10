@@ -141,6 +141,7 @@ let nodTimeline;
 let bounceTimeline;
 let gestureTimeline;
 let floatWaveAndSwayTimeline;
+let roamAndDisappearTimeline;
 let debugPanel;
 
 function splitTransformOrigin(transformOrigin) {
@@ -331,6 +332,7 @@ function pauseAnimations() {
   bounceTimeline?.pause();
   gestureTimeline?.pause();
   floatWaveAndSwayTimeline?.pause();
+  roamAndDisappearTimeline?.pause();
   floatTimeline?.pause();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.pause());
 }
@@ -345,6 +347,7 @@ function resumeAnimations() {
   bounceTimeline?.resume();
   gestureTimeline?.resume();
   floatWaveAndSwayTimeline?.resume();
+  roamAndDisappearTimeline?.resume();
   floatTimeline?.resume();
   gsap.getTweensOf([...ANIMATED_PARTS, ...FLOAT_TARGETS]).forEach((tween) => tween.resume());
 }
@@ -369,6 +372,7 @@ function stopAllAnimations({ reset = true } = {}) {
   bounceTimeline?.kill();
   gestureTimeline?.kill();
   floatWaveAndSwayTimeline?.kill();
+  roamAndDisappearTimeline?.kill();
 
   talkTimeline = null;
   waveTimeline = null;
@@ -377,13 +381,16 @@ function stopAllAnimations({ reset = true } = {}) {
   bounceTimeline = null;
   gestureTimeline = null;
   floatWaveAndSwayTimeline = null;
+  roamAndDisappearTimeline = null;
 
   gsap.killTweensOf([...ANIMATED_PARTS, robotWrapper, '.robot-ground-shadow']);
 
   if (reset) {
     applyRobotConfig();
-    gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1 });
+    gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1, opacity: 1 });
     gsap.set('.robot-ground-shadow', {
+      x: 0,
+      y: 0,
       scaleX: 1,
       scaleY: 1,
       opacity: 1,
@@ -392,6 +399,46 @@ function stopAllAnimations({ reset = true } = {}) {
   }
 
   setActiveButton(null);
+}
+
+function roamAndDisappear() {
+  stopAllAnimations({ reset: true });
+
+  const stageBounds = document.querySelector('.stage').getBoundingClientRect();
+  const robotBounds = robotWrapper.getBoundingClientRect();
+  const horizontalRange = Math.max(28, (stageBounds.width - robotBounds.width) / 2 - 12);
+  const verticalRange = Math.max(30, (stageBounds.height - robotBounds.height) / 2 - 36);
+  const shadow = '.robot-ground-shadow';
+
+  roamAndDisappearTimeline = gsap.timeline({
+    defaults: { overwrite: 'auto', ease: 'sine.inOut' },
+    onComplete: () => {
+      roamAndDisappearTimeline = null;
+      setActiveButton(null);
+    },
+  });
+
+  roamAndDisappearTimeline
+    .to(robotWrapper, { x: -horizontalRange * 0.72, y: -verticalRange * 0.42, rotate: -8, duration: 0.9 })
+    .to(shadow, { x: -horizontalRange * 0.72, scaleX: 0.76, opacity: 0.42, duration: 0.9 }, 0)
+    .to(robotWrapper, { x: horizontalRange, y: verticalRange * 0.18, rotate: 9, duration: 1.2 })
+    .to(shadow, { x: horizontalRange, scaleX: 0.9, opacity: 0.55, duration: 1.2 }, '<')
+    .to(robotWrapper, { x: -horizontalRange * 0.35, y: -verticalRange, rotate: -5, duration: 1.05 })
+    .to(shadow, { x: -horizontalRange * 0.35, scaleX: 0.52, opacity: 0.24, duration: 1.05 }, '<')
+    .to(robotWrapper, {
+      x: horizontalRange * 0.82,
+      y: -verticalRange * 0.55,
+      rotate: 12,
+      scaleX: 0.72,
+      scaleY: 0.72,
+      opacity: 0,
+      duration: 0.9,
+      ease: 'power2.in',
+    })
+    .to(shadow, { x: horizontalRange * 0.82, scaleX: 0.15, scaleY: 0.3, opacity: 0, duration: 0.72 }, '<0.18');
+
+  setActiveButton('roamAndDisappear');
+  return roamAndDisappearTimeline;
 }
 
 function floatWaveAndSway() {
@@ -1286,6 +1333,7 @@ window.stopIdle = stopIdle;
 window.stopAllAnimations = stopAllAnimations;
 window.wave = wave;
 window.floatWaveAndSway = floatWaveAndSway;
+window.roamAndDisappear = roamAndDisappear;
 window.lookAround = lookAround;
 window.nod = nod;
 window.bounce = bounce;
@@ -1304,6 +1352,7 @@ controls.addEventListener('click', (event) => {
     inspired: startInspiredIdle,
     wave,
     floatWaveAndSway,
+    roamAndDisappear,
     lookAround,
     nod,
     bounce,
