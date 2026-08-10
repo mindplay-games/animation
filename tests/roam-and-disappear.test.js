@@ -19,6 +19,12 @@ test('uses responsive stage bounds for a multi-point journey', () => {
   assert.ok((animation.match(/\.to\(robotWrapper/g) ?? []).length >= 4);
 });
 
+test('keeps the roaming journey slow and easy to follow', () => {
+  const wrapperDurations = [...animation.matchAll(/\.to\(robotWrapper, \{[\s\S]*?duration: ([\d.]+)/g)].map((match) => Number(match[1]));
+  assert.deepEqual(wrapperDurations, [1.6, 2.1, 1.8, 1.5]);
+  assert.ok(wrapperDurations.reduce((total, duration) => total + duration, 0) >= 7);
+});
+
 test('fades the robot and its shadow at the end', () => {
   assert.match(animation, /opacity: 0,[\s\S]*?ease: 'power2\.in'/);
   assert.match(animation, /\.to\(shadow, \{[^}]*opacity: 0/);

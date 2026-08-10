@@ -419,12 +419,12 @@ function roamAndDisappear() {
   });
 
   roamAndDisappearTimeline
-    .to(robotWrapper, { x: -horizontalRange * 0.72, y: -verticalRange * 0.42, rotate: -8, duration: 0.9 })
-    .to(shadow, { x: -horizontalRange * 0.72, scaleX: 0.76, opacity: 0.42, duration: 0.9 }, 0)
-    .to(robotWrapper, { x: horizontalRange, y: verticalRange * 0.18, rotate: 9, duration: 1.2 })
-    .to(shadow, { x: horizontalRange, scaleX: 0.9, opacity: 0.55, duration: 1.2 }, '<')
-    .to(robotWrapper, { x: -horizontalRange * 0.35, y: -verticalRange, rotate: -5, duration: 1.05 })
-    .to(shadow, { x: -horizontalRange * 0.35, scaleX: 0.52, opacity: 0.24, duration: 1.05 }, '<')
+    .to(robotWrapper, { x: -horizontalRange * 0.72, y: -verticalRange * 0.42, rotate: -8, duration: 1.6 })
+    .to(shadow, { x: -horizontalRange * 0.72, scaleX: 0.76, opacity: 0.42, duration: 1.6 }, 0)
+    .to(robotWrapper, { x: horizontalRange, y: verticalRange * 0.18, rotate: 9, duration: 2.1 })
+    .to(shadow, { x: horizontalRange, scaleX: 0.9, opacity: 0.55, duration: 2.1 }, '<')
+    .to(robotWrapper, { x: -horizontalRange * 0.35, y: -verticalRange, rotate: -5, duration: 1.8 })
+    .to(shadow, { x: -horizontalRange * 0.35, scaleX: 0.52, opacity: 0.24, duration: 1.8 }, '<')
     .to(robotWrapper, {
       x: horizontalRange * 0.82,
       y: -verticalRange * 0.55,
@@ -432,10 +432,10 @@ function roamAndDisappear() {
       scaleX: 0.72,
       scaleY: 0.72,
       opacity: 0,
-      duration: 0.9,
+      duration: 1.5,
       ease: 'power2.in',
     })
-    .to(shadow, { x: horizontalRange * 0.82, scaleX: 0.15, scaleY: 0.3, opacity: 0, duration: 0.72 }, '<0.18');
+    .to(shadow, { x: horizontalRange * 0.82, scaleX: 0.15, scaleY: 0.3, opacity: 0, duration: 1.2 }, '<0.3');
 
   setActiveButton('roamAndDisappear');
   return roamAndDisappearTimeline;
