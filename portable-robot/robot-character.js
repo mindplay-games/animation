@@ -6,12 +6,27 @@
 
 const ROBOT_CONFIG = {
   robot: { x: 0, y: 0, rotate: -7, scale: 0.41, scaleX: 1, scaleY: 1, transformOrigin: '50% 56%', zIndex: 0, width: 390, top: 0, left: 0 },
-  head: { left: 95, top: 20, width: 260, x: -15, y: -107, rotate: 1, scale: 1.15, scaleX: 1, scaleY: 1, transformOrigin: '50% 75.03%', zIndex: 6 },
-  body: { left: 120, top: 150, width: 220, x: -8, y: -25, rotate: 5, scale: 0.81, scaleX: 1, scaleY: 1, transformOrigin: '50% 50%', zIndex: 3 },
-  leftHand: { left: 45, top: 205, width: 120, x: 8, y: -68, rotate: -3, scale: 1.11, scaleX: 1, scaleY: 1, transformOrigin: '80% 15%', zIndex: 4 },
-  rightHand: { left: 300, top: 130, width: 120, x: -38, y: -53, rotate: -6, scale: 1.95, scaleX: 1, scaleY: 1, transformOrigin: '18% 30%', zIndex: 2 },
-  leftLeg: { left: 95, top: 330, width: 120, x: -12, y: -67, rotate: 19, scale: 1.02, scaleX: 1, scaleY: 1, transformOrigin: '60% 10%', zIndex: 4 },
-  rightLeg: { left: 240, top: 330, width: 120, x: -32, y: -74, rotate: -10, scale: 1.28, scaleX: 1, scaleY: 1, transformOrigin: '45% 10%', zIndex: 1 },
+  head: { left: 95, top: 20, width: 260, height: 246, x: -15, y: -107, rotate: 1, scale: 1.15, scaleX: 1, scaleY: 1, transformOrigin: '50% 75.03%', zIndex: 6 },
+  body: { left: 120, top: 150, width: 220, height: 218.6, x: -8, y: -25, rotate: 5, scale: 0.81, scaleX: 1, scaleY: 1, transformOrigin: '50% 50%', zIndex: 3 },
+  leftHand: { left: 45, top: 205, width: 120, height: 168.8, x: 8, y: -68, rotate: -3, scale: 1.11, scaleX: 1, scaleY: 1, transformOrigin: '80% 15%', zIndex: 4 },
+  rightHand: { left: 300, top: 130, width: 120, height: 117.9, x: -38, y: -53, rotate: -6, scale: 1.95, scaleX: 1, scaleY: 1, transformOrigin: '18% 30%', zIndex: 2 },
+  leftLeg: { left: 95, top: 330, width: 120, height: 211.9, x: -12, y: -67, rotate: 19, scale: 1.02, scaleX: 1, scaleY: 1, transformOrigin: '60% 10%', zIndex: 4 },
+  rightLeg: { left: 240, top: 330, width: 120, height: 156.1, x: -32, y: -74, rotate: -10, scale: 1.28, scaleX: 1, scaleY: 1, transformOrigin: '45% 10%', zIndex: 1 },
+};
+
+const ROBOT_LEFT_CONFIG = {
+  robot: { x: 0, y: 0, rotate: -7, scale: 0.41, scaleX: 1, scaleY: 1, transformOrigin: '50% 56%', zIndex: 0, width: 390, top: 0, left: 0 },
+  head: { left: 129, top: 26, width: 260, height: 246, x: -15, y: -107, rotate: 4, scale: 1.2, scaleX: 1, scaleY: 1, transformOrigin: '46.42% 96.88%', zIndex: 6 },
+  body: { left: 120, top: 150, width: 220, height: 218.6, x: -8, y: -25, rotate: 5, scale: 0.83, scaleX: 1, scaleY: 1, transformOrigin: '50% 50%', zIndex: 3 },
+  leftHand: { left: 260, top: 210, width: 120, height: 168.8, x: 8, y: -68, rotate: -3, scale: 1.11, scaleX: 1, scaleY: 1, transformOrigin: '18.04% 18.75%', zIndex: 3 },
+  rightHand: { left: 119, top: 146, width: 120, height: 138, x: -38, y: -53, rotate: -6, scale: 1.95, scaleX: 1, scaleY: 1, transformOrigin: '86.98% 54.79%', zIndex: 2 },
+  leftLeg: { left: 250, top: 330, width: 120, height: 211.9, x: -12, y: -67, rotate: 19, scale: 1.1, scaleX: 1, scaleY: 1, transformOrigin: '18.53% 14.12%', zIndex: 4 },
+  rightLeg: { left: 122, top: 315, width: 120, height: 156.1, x: -32, y: -74, rotate: -10, scale: 1.37, scaleX: 1, scaleY: 1, transformOrigin: '71.62% 29.85%', zIndex: 1 },
+};
+
+const ROBOT_PART_FILES = {
+  right: { head: 'head.svg', body: 'body.svg', leftHand: 'lhand.svg', rightHand: 'rhand.svg', leftLeg: 'leftleg.svg', rightLeg: 'rightleg.svg' },
+  left: { head: 'head_turn_left.svg', body: 'body_turn_left.svg', leftHand: 'lhand_turn_left.svg', rightHand: 'rhand_turn_left.svg', leftLeg: 'leftleg_turn_left.svg', rightLeg: 'rightleg_turn_left.svg' },
 };
 
 const PART_NAMES = ['robot', 'head', 'body', 'leftHand', 'rightHand', 'leftLeg', 'rightLeg'];
@@ -45,6 +60,15 @@ function waitForImages(root) {
   }));
 }
 
+function preloadImages(urls) {
+  return Promise.all(urls.map((url) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', resolve, { once: true });
+    image.addEventListener('error', () => reject(new Error(`Unable to load robot asset: ${url}`)), { once: true });
+    image.src = url;
+  })));
+}
+
 export async function createRobot(root, options = {}) {
   if (!(root instanceof Element)) throw new TypeError('createRobot(root): root must be a DOM Element.');
   if (root.dataset.portableRobotMounted === 'true') throw new Error('A robot is already mounted in this element.');
@@ -76,9 +100,10 @@ export async function createRobot(root, options = {}) {
     rightLeg: root.querySelector('[data-part="rightLeg"]'),
   };
   const animatedParts = PART_NAMES.map((partName) => partElements[partName]);
-  const initialConfig = structuredClone(ROBOT_CONFIG);
+  const facingConfigs = { right: ROBOT_CONFIG, left: ROBOT_LEFT_CONFIG };
   const timelines = new Set();
   let currentAction = null;
+  let facing = 'right';
   let destroyed = false;
 
   let idleTimeline;
@@ -96,7 +121,7 @@ export async function createRobot(root, options = {}) {
     if (destroyed) throw new Error('This robot instance has been destroyed.');
   };
 
-  const base = (partName) => initialConfig[partName];
+  const base = (partName, direction = facing) => facingConfigs[direction][partName];
   const baseTransform = (partName, overrides = {}) => {
     const value = base(partName);
     return {
@@ -113,13 +138,24 @@ export async function createRobot(root, options = {}) {
 
   const applyConfigToPart = (partName) => {
     const element = partElements[partName];
-    const config = ROBOT_CONFIG[partName];
+    const config = base(partName);
     const styles = { ...baseTransform(partName), zIndex: config.zIndex, width: config.width };
-    if (partName !== 'robot') Object.assign(styles, { position: 'absolute', left: config.left, top: config.top });
+    if (partName !== 'robot') Object.assign(styles, { position: 'absolute', left: config.left, top: config.top, height: config.height });
     gsap.set(element, styles);
   };
 
   const applyRobotConfig = () => PART_NAMES.forEach(applyConfigToPart);
+  const setFacing = (direction) => {
+    assertActive();
+    if (!ROBOT_PART_FILES[direction]) throw new RangeError(`Unknown robot facing: ${direction}`);
+    Object.entries(ROBOT_PART_FILES[direction]).forEach(([partName, fileName]) => {
+      partElements[partName].src = `${assetBaseUrl}${fileName}`;
+    });
+    facing = direction;
+    robot.dataset.facing = direction;
+    applyRobotConfig();
+    root.dispatchEvent(new CustomEvent('robot:facingchange', { detail: { facing: direction } }));
+  };
   const resetPartToBase = (partName, overrides = {}) => {
     gsap.set(partElements[partName], {
       ...baseTransform(partName, { transformOrigin: overrides.transformOrigin ?? base(partName).transformOrigin }),
@@ -243,6 +279,7 @@ export async function createRobot(root, options = {}) {
     gsap.killTweensOf([...animatedParts, robotWrapper, shadow]);
 
     if (reset) {
+      setFacing('right');
       applyRobotConfig();
       gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1 });
       gsap.set(shadow, {
@@ -410,8 +447,10 @@ export async function createRobot(root, options = {}) {
 
     const head = partElements.head;
     const body = partElements.body;
-    const headBase = base('head');
-    const bodyBase = base('body');
+    const leftHeadBase = base('head', 'left');
+    const leftBodyBase = base('body', 'left');
+    const rightHeadBase = base('head', 'right');
+    const rightBodyBase = base('body', 'right');
 
     lookAroundTimeline = gsap.timeline({
       defaults: {
@@ -419,6 +458,7 @@ export async function createRobot(root, options = {}) {
         ease: 'sine.inOut',
       },
       onComplete: () => {
+        setFacing('right');
         resetPartToBase('head');
         resetPartToBase('body');
         lookAroundTimeline = null;
@@ -427,53 +467,55 @@ export async function createRobot(root, options = {}) {
     });
 
     lookAroundTimeline
+      .call(() => setFacing('left'))
       .to(head, {
-        x: headBase.x - 3,
-        y: headBase.y,
-        rotate: headBase.rotate - 5,
+        x: leftHeadBase.x - 3,
+        y: leftHeadBase.y,
+        rotate: leftHeadBase.rotate - 5,
         duration: 0.28,
       })
       .to(
         body,
         {
-          x: bodyBase.x,
-          y: bodyBase.y,
-          rotate: bodyBase.rotate - 0.8,
+          x: leftBodyBase.x,
+          y: leftBodyBase.y,
+          rotate: leftBodyBase.rotate - 0.8,
           duration: 0.3,
         },
         0.08
       )
       .to({}, { duration: 0.18 })
+      .call(() => setFacing('right'))
       .to(head, {
-        x: headBase.x + 3,
-        y: headBase.y,
-        rotate: headBase.rotate + 5,
+        x: rightHeadBase.x + 3,
+        y: rightHeadBase.y,
+        rotate: rightHeadBase.rotate + 5,
         duration: 0.42,
       })
       .to(
         body,
         {
-          x: bodyBase.x,
-          y: bodyBase.y,
-          rotate: bodyBase.rotate + 0.8,
+          x: rightBodyBase.x,
+          y: rightBodyBase.y,
+          rotate: rightBodyBase.rotate + 0.8,
           duration: 0.4,
         },
         '<0.06'
       )
       .to({}, { duration: 0.18 })
       .to(head, {
-        x: headBase.x,
-        y: headBase.y,
-        rotate: headBase.rotate,
+        x: rightHeadBase.x,
+        y: rightHeadBase.y,
+        rotate: rightHeadBase.rotate,
         duration: 0.3,
         ease: 'power1.out',
       })
       .to(
         body,
         {
-          x: bodyBase.x,
-          y: bodyBase.y,
-          rotate: bodyBase.rotate,
+          x: rightBodyBase.x,
+          y: rightBodyBase.y,
+          rotate: rightBodyBase.rotate,
           duration: 0.3,
           ease: 'power1.out',
         },
@@ -934,7 +976,10 @@ export async function createRobot(root, options = {}) {
   const actions = { idle: startIdle, inspired: startInspiredIdle, wave, floatWaveAndSway, lookAround, nod, bounce, ponder, dance, talk: talkStart };
 
   try {
-    await waitForImages(root);
+    await Promise.all([
+      waitForImages(root),
+      preloadImages(Object.values(ROBOT_PART_FILES.left).map((fileName) => `${assetBaseUrl}${fileName}`)),
+    ]);
   } catch (error) {
     root.replaceChildren();
     root.classList.remove('portable-robot');
@@ -942,6 +987,7 @@ export async function createRobot(root, options = {}) {
     throw error;
   }
   assertActive();
+  robot.dataset.facing = facing;
   applyRobotConfig();
   gsap.set(scaleLayer, { scale: initialScale, transformOrigin: 'top left' });
 
@@ -952,6 +998,7 @@ export async function createRobot(root, options = {}) {
       return actions[name]();
     },
     stop() { assertActive(); stopAllAnimations({ reset: true }); },
+    setFacing(direction) { setFacing(direction); },
     startTalk() { assertActive(); return talkStart(); },
     stopTalk() { assertActive(); return talkStop(); },
     setScale(value) {
@@ -961,6 +1008,7 @@ export async function createRobot(root, options = {}) {
       gsap.set(scaleLayer, { scale });
     },
     get action() { return currentAction; },
+    get facing() { return facing; },
     get element() { return root; },
     destroy() {
       if (destroyed) return;
@@ -982,4 +1030,4 @@ export async function createRobot(root, options = {}) {
   return api;
 }
 
-export { ROBOT_CONFIG };
+export { ROBOT_CONFIG, ROBOT_LEFT_CONFIG };

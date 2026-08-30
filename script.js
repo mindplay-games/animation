@@ -19,6 +19,7 @@ const ROBOT_CONFIG = {
     left: 95,
     top: 20,
     width: 260,
+    height: 246,
     x: -15,
     y: -107,
     rotate: 1,
@@ -32,6 +33,7 @@ const ROBOT_CONFIG = {
     left: 120,
     top: 150,
     width: 220,
+    height: 218.6,
     x: -8,
     y: -25,
     rotate: 5,
@@ -45,6 +47,7 @@ const ROBOT_CONFIG = {
     left: 45,
     top: 205,
     width: 120,
+    height: 168.8,
     x: 8,
     y: -68,
     rotate: -3,
@@ -58,6 +61,7 @@ const ROBOT_CONFIG = {
     left: 300,
     top: 130,
     width: 120,
+    height: 117.9,
     x: -38,
     y: -53,
     rotate: -6,
@@ -71,6 +75,7 @@ const ROBOT_CONFIG = {
     left: 95,
     top: 330,
     width: 120,
+    height: 211.9,
     x: -12,
     y: -67,
     rotate: 19,
@@ -84,6 +89,7 @@ const ROBOT_CONFIG = {
     left: 240,
     top: 330,
     width: 120,
+    height: 156.1,
     x: -32,
     y: -74,
     rotate: -10,
@@ -106,6 +112,7 @@ const CONFIG_FIELDS = [
   'transformOriginY',
   'zIndex',
   'width',
+  'height',
   'top',
   'left',
 ];
@@ -124,9 +131,68 @@ const partElements = {
   leftLeg: document.querySelector('[data-part="leftLeg"]'),
   rightLeg: document.querySelector('[data-part="rightLeg"]'),
 };
+const ROBOT_PART_SOURCES = {
+  right: {
+    head: 'images/head.svg',
+    body: 'images/body.svg',
+    leftHand: 'images/lhand.svg',
+    rightHand: 'images/rhand.svg',
+    leftLeg: 'images/leftleg.svg',
+    rightLeg: 'images/rightleg.svg',
+  },
+  left: {
+    head: 'images/head_turn_left.svg',
+    body: 'images/body_turn_left.svg',
+    leftHand: 'images/lhand_turn_left.svg',
+    rightHand: 'images/rhand_turn_left.svg',
+    leftLeg: 'images/leftleg_turn_left.svg',
+    rightLeg: 'images/rightleg_turn_left.svg',
+  },
+};
 const ANIMATED_PARTS = PART_NAMES.map((partName) => partElements[partName]);
 const FLOAT_TARGETS = [robotWrapper, '.robot-ground-shadow'];
 const initialConfig = structuredClone(ROBOT_CONFIG);
+const ROBOT_LEFT_CONFIG = {
+  robot: {
+    x: 0, y: 0, rotate: -7, scale: 0.41, scaleX: 1, scaleY: 1,
+    transformOrigin: '50% 56%', zIndex: 0, width: 390, top: 0, left: 0,
+  },
+  head: {
+    left: 129, top: 26, width: 260, height: 246, x: -15, y: -107,
+    rotate: 4, scale: 1.2, scaleX: 1, scaleY: 1,
+    transformOrigin: '46.42% 96.88%', zIndex: 6,
+  },
+  body: {
+    left: 120, top: 150, width: 220, height: 218.6, x: -8, y: -25,
+    rotate: 5, scale: 0.83, scaleX: 1, scaleY: 1,
+    transformOrigin: '50% 50%', zIndex: 3,
+  },
+  leftHand: {
+    left: 260, top: 210, width: 120, height: 168.8, x: 8, y: -68,
+    rotate: -3, scale: 1.11, scaleX: 1, scaleY: 1,
+    transformOrigin: '18.04% 18.75%', zIndex: 3,
+  },
+  rightHand: {
+    left: 119, top: 146, width: 120, height: 138, x: -38, y: -53,
+    rotate: -6, scale: 1.95, scaleX: 1, scaleY: 1,
+    transformOrigin: '86.98% 54.79%', zIndex: 2,
+  },
+  leftLeg: {
+    left: 250, top: 330, width: 120, height: 211.9, x: -12, y: -67,
+    rotate: 19, scale: 1.1, scaleX: 1, scaleY: 1,
+    transformOrigin: '18.53% 14.12%', zIndex: 4,
+  },
+  rightLeg: {
+    left: 122, top: 315, width: 120, height: 156.1, x: -32, y: -74,
+    rotate: -10, scale: 1.37, scaleX: 1, scaleY: 1,
+    transformOrigin: '71.62% 29.85%', zIndex: 1,
+  },
+};
+const ROBOT_FACING_CONFIGS = {
+  right: ROBOT_CONFIG,
+  left: ROBOT_LEFT_CONFIG,
+};
+const initialFacingConfigs = structuredClone(ROBOT_FACING_CONFIGS);
 const debugInputs = new Map();
 const originDots = new Map();
 
@@ -143,6 +209,34 @@ let gestureTimeline;
 let floatWaveAndSwayTimeline;
 let roamAndDisappearTimeline;
 let debugPanel;
+let robotFacing = null;
+
+// Warm both poses up so changing direction in the middle of an animation is instant.
+Object.values(ROBOT_PART_SOURCES).forEach((pose) => {
+  Object.values(pose).forEach((source) => {
+    const image = new Image();
+    image.src = source;
+  });
+});
+
+function setRobotFacing(direction) {
+  if (!ROBOT_PART_SOURCES[direction] || robotFacing === direction) return;
+
+  Object.entries(ROBOT_PART_SOURCES[direction]).forEach(([partName, source]) => {
+    partElements[partName].src = source;
+  });
+
+  robotFacing = direction;
+  robot.dataset.facing = direction;
+
+  // Directional placement is applied with the artwork, so the debug editor can
+  // calibrate a genuinely independent pose for each set of SVGs.
+  applyRobotConfig();
+}
+
+function activeRobotConfig() {
+  return ROBOT_FACING_CONFIGS[robotFacing || 'right'];
+}
 
 function splitTransformOrigin(transformOrigin) {
   const [x = '50%', y = '50%'] = transformOrigin.split(' ');
@@ -154,7 +248,7 @@ function joinTransformOrigin(x, y) {
 }
 
 function getDebugValue(partName, field) {
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
 
   if (field === 'transformOriginX') return splitTransformOrigin(config.transformOrigin).x;
   if (field === 'transformOriginY') return splitTransformOrigin(config.transformOrigin).y;
@@ -163,7 +257,7 @@ function getDebugValue(partName, field) {
 }
 
 function setDebugValue(partName, field, value) {
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
   const numericValue = Number(value);
 
   if (field === 'transformOriginX' || field === 'transformOriginY') {
@@ -181,7 +275,7 @@ function setDebugValue(partName, field, value) {
 
 function applyConfigToPart(partName) {
   const element = partElements[partName];
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
   const styles = {
     x: config.x,
     y: config.y,
@@ -199,6 +293,7 @@ function applyConfigToPart(partName) {
     styles.left = config.left;
     styles.top = config.top;
     styles.width = config.width;
+    styles.height = config.height;
   }
 
   gsap.set(element, styles);
@@ -386,6 +481,7 @@ function stopAllAnimations({ reset = true } = {}) {
   gsap.killTweensOf([...ANIMATED_PARTS, robotWrapper, '.robot-ground-shadow']);
 
   if (reset) {
+    setRobotFacing('right');
     applyRobotConfig();
     gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1, opacity: 1 });
     gsap.set('.robot-ground-shadow', {
@@ -429,8 +525,10 @@ function roamAndDisappear() {
     .to(shadow, { x: horizontalRange * 0.68, scaleX: 0.9, opacity: 0.54, duration: 2.2 }, 0)
     .to(robotWrapper, { x: horizontalRange * 0.82, y: verticalRange * 0.15, rotate: -7, duration: 2.1 })
     .to(shadow, { x: horizontalRange * 0.82, scaleX: 0.76, opacity: 0.43, duration: 2.1 }, '<')
+    .call(() => setRobotFacing('left'))
     .to(robotWrapper, { x: horizontalRange * 0.42, y: -verticalRange * 0.08, rotate: -4, duration: 2.2 })
     .to(shadow, { x: horizontalRange * 0.42, scaleX: 0.62, opacity: 0.33, duration: 2.2 }, '<')
+    .call(() => setRobotFacing('right'))
     .to(robotWrapper, { x: horizontalRange * 0.58, y: -verticalRange * 0.48, rotate: 6, duration: 2 })
     .to(shadow, { x: horizontalRange * 0.58, scaleX: 0.42, opacity: 0.22, duration: 2 }, '<')
     // Finish inside the marked upper-right disappearance area.
@@ -619,6 +717,7 @@ function lookAround() {
       ease: 'sine.inOut',
     },
     onComplete: () => {
+      setRobotFacing('right');
       resetPartToBase('head');
       resetPartToBase('body');
       lookAroundTimeline = null;
@@ -627,6 +726,7 @@ function lookAround() {
   });
 
   lookAroundTimeline
+    .call(() => setRobotFacing('left'))
     .to(head, {
       x: headBase.x - 3,
       y: headBase.y,
@@ -644,6 +744,7 @@ function lookAround() {
       0.08
     )
     .to({}, { duration: 0.18 })
+    .call(() => setRobotFacing('right'))
     .to(head, {
       x: headBase.x + 3,
       y: headBase.y,
@@ -1136,6 +1237,13 @@ function createDebugPanel() {
   debugPanel.innerHTML = `
     <h2>Robot Debug Editor</h2>
     <label>
+      Facing
+      <select data-debug-facing>
+        <option value="right">Right artwork</option>
+        <option value="left">Left artwork</option>
+      </select>
+    </label>
+    <label>
       Part
       <select data-debug-part>
         ${PART_NAMES.map((partName) => `<option value="${partName}">${partName}</option>`).join('')}
@@ -1146,7 +1254,7 @@ function createDebugPanel() {
       <button type="button" data-debug-action="pause">Pause animations</button>
       <button type="button" data-debug-action="resume">Resume animations</button>
       <button type="button" data-debug-action="reset">Reset selected part</button>
-      <button type="button" data-debug-action="copy">Copy current config</button>
+      <button type="button" data-debug-action="copy">Copy current facing config</button>
     </div>
     <p class="debug-help">Shortcuts: arrows move 1px, Shift+arrows move 10px, [ / ] rotate 1°, Shift+[ / Shift+] rotate 5°, Tab cycles parts.</p>
   `;
@@ -1155,6 +1263,15 @@ function createDebugPanel() {
   const select = debugPanel.querySelector('[data-debug-part]');
   select.value = selectedPart;
   select.addEventListener('change', () => selectPart(select.value));
+
+  const facingSelect = debugPanel.querySelector('[data-debug-facing]');
+  facingSelect.value = robotFacing;
+  facingSelect.addEventListener('change', () => {
+    setRobotFacing(facingSelect.value);
+    refreshDebugInputs();
+    updateOriginDots();
+    updateSelectedHighlight();
+  });
 
   debugPanel.addEventListener('input', (event) => {
     const input = event.target.closest('[data-debug-field]');
@@ -1225,13 +1342,52 @@ function createOriginDots() {
     dot.title = `${partName} transform origin`;
     robot.appendChild(dot);
     originDots.set(partName, dot);
+    installOriginDotDragging(dot, partName);
   });
 
   updateOriginDots();
 }
 
+function installOriginDotDragging(dot, partName) {
+  dot.addEventListener('pointerdown', (event) => {
+    if (partName !== selectedPart) return;
+
+    event.preventDefault();
+    dot.setPointerCapture(event.pointerId);
+
+    const config = activeRobotConfig()[partName];
+    const startOrigin = splitTransformOrigin(config.transformOrigin);
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const element = partElements[partName];
+    const bounds = element.getBoundingClientRect();
+    const renderedWidth = Math.max(1, bounds.width);
+    const renderedHeight = Math.max(1, bounds.height);
+
+    const move = (moveEvent) => {
+      const originX = Math.max(0, Math.min(100, startOrigin.x + ((moveEvent.clientX - startX) / renderedWidth) * 100));
+      const originY = Math.max(0, Math.min(100, startOrigin.y + ((moveEvent.clientY - startY) / renderedHeight) * 100));
+
+      config.transformOrigin = joinTransformOrigin(Number(originX.toFixed(2)), Number(originY.toFixed(2)));
+      applyConfigToPart(partName);
+      refreshDebugInputs();
+      updateOriginDots();
+    };
+
+    const up = () => {
+      dot.removeEventListener('pointermove', move);
+      dot.removeEventListener('pointerup', up);
+      dot.removeEventListener('pointercancel', up);
+    };
+
+    dot.addEventListener('pointermove', move);
+    dot.addEventListener('pointerup', up);
+    dot.addEventListener('pointercancel', up);
+  });
+}
+
 function getOriginDotPosition(partName) {
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
   const { x, y } = splitTransformOrigin(config.transformOrigin);
 
   if (partName === 'robot') {
@@ -1243,8 +1399,8 @@ function getOriginDotPosition(partName) {
 
   const element = partElements[partName];
   return {
-    left: config.left + config.width * (x / 100),
-    top: config.top + element.offsetHeight * (y / 100),
+    left: config.left + config.x + config.width * (x / 100),
+    top: config.top + config.y + element.offsetHeight * (y / 100),
   };
 }
 
@@ -1269,7 +1425,7 @@ function updateSelectedHighlight() {
 }
 
 function resetSelectedPart() {
-  ROBOT_CONFIG[selectedPart] = structuredClone(initialConfig[selectedPart]);
+  activeRobotConfig()[selectedPart] = structuredClone(initialFacingConfigs[robotFacing][selectedPart]);
   applyConfigToPart(selectedPart);
   refreshDebugInputs();
   updateOriginDots();
@@ -1277,7 +1433,8 @@ function resetSelectedPart() {
 }
 
 function formatConfigForCopy() {
-  return `const ROBOT_CONFIG = ${JSON.stringify(ROBOT_CONFIG, null, 2).replace(/"([^"\\]+)":/g, '$1:')};`;
+  const configName = robotFacing === 'left' ? 'ROBOT_LEFT_CONFIG' : 'ROBOT_RIGHT_CONFIG';
+  return `const ${configName} = ${JSON.stringify(activeRobotConfig(), null, 2).replace(/"([^"\\]+)":/g, '$1:')};`;
 }
 
 async function copyCurrentConfig() {
@@ -1329,6 +1486,7 @@ function handleDebugKeyboard(event) {
   action();
 }
 
+setRobotFacing('right');
 applyRobotConfig();
 ensureFloatTimeline();
 startIdle();
@@ -1342,6 +1500,8 @@ if (DEBUG_ROBOT) {
 }
 
 window.ROBOT_CONFIG = ROBOT_CONFIG;
+window.ROBOT_FACING_CONFIGS = ROBOT_FACING_CONFIGS;
+window.setRobotFacing = setRobotFacing;
 window.startIdle = startIdle;
 window.stopIdle = stopIdle;
 window.stopAllAnimations = stopAllAnimations;
