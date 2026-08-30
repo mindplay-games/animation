@@ -124,6 +124,24 @@ const partElements = {
   leftLeg: document.querySelector('[data-part="leftLeg"]'),
   rightLeg: document.querySelector('[data-part="rightLeg"]'),
 };
+const ROBOT_PART_SOURCES = {
+  right: {
+    head: 'images/head.svg',
+    body: 'images/body.svg',
+    leftHand: 'images/lhand.svg',
+    rightHand: 'images/rhand.svg',
+    leftLeg: 'images/leftleg.svg',
+    rightLeg: 'images/rightleg.svg',
+  },
+  left: {
+    head: 'images/head_turn_left.svg',
+    body: 'images/body_turn_left.svg',
+    leftHand: 'images/lhand_turn_left.svg',
+    rightHand: 'images/rhand_turn_left.svg',
+    leftLeg: 'images/leftleg_turn_left.svg',
+    rightLeg: 'images/rightleg_turn_left.svg',
+  },
+};
 const ANIMATED_PARTS = PART_NAMES.map((partName) => partElements[partName]);
 const FLOAT_TARGETS = [robotWrapper, '.robot-ground-shadow'];
 const initialConfig = structuredClone(ROBOT_CONFIG);
@@ -143,6 +161,26 @@ let gestureTimeline;
 let floatWaveAndSwayTimeline;
 let roamAndDisappearTimeline;
 let debugPanel;
+let robotFacing = null;
+
+// Warm both poses up so changing direction in the middle of an animation is instant.
+Object.values(ROBOT_PART_SOURCES).forEach((pose) => {
+  Object.values(pose).forEach((source) => {
+    const image = new Image();
+    image.src = source;
+  });
+});
+
+function setRobotFacing(direction) {
+  if (!ROBOT_PART_SOURCES[direction] || robotFacing === direction) return;
+
+  Object.entries(ROBOT_PART_SOURCES[direction]).forEach(([partName, source]) => {
+    partElements[partName].src = source;
+  });
+
+  robotFacing = direction;
+  robot.dataset.facing = direction;
+}
 
 function splitTransformOrigin(transformOrigin) {
   const [x = '50%', y = '50%'] = transformOrigin.split(' ');
@@ -386,6 +424,7 @@ function stopAllAnimations({ reset = true } = {}) {
   gsap.killTweensOf([...ANIMATED_PARTS, robotWrapper, '.robot-ground-shadow']);
 
   if (reset) {
+    setRobotFacing('right');
     applyRobotConfig();
     gsap.set(robotWrapper, { x: 0, y: 0, rotate: 0, scaleX: 1, scaleY: 1, opacity: 1 });
     gsap.set('.robot-ground-shadow', {
@@ -429,8 +468,10 @@ function roamAndDisappear() {
     .to(shadow, { x: horizontalRange * 0.68, scaleX: 0.9, opacity: 0.54, duration: 2.2 }, 0)
     .to(robotWrapper, { x: horizontalRange * 0.82, y: verticalRange * 0.15, rotate: -7, duration: 2.1 })
     .to(shadow, { x: horizontalRange * 0.82, scaleX: 0.76, opacity: 0.43, duration: 2.1 }, '<')
+    .call(() => setRobotFacing('left'))
     .to(robotWrapper, { x: horizontalRange * 0.42, y: -verticalRange * 0.08, rotate: -4, duration: 2.2 })
     .to(shadow, { x: horizontalRange * 0.42, scaleX: 0.62, opacity: 0.33, duration: 2.2 }, '<')
+    .call(() => setRobotFacing('right'))
     .to(robotWrapper, { x: horizontalRange * 0.58, y: -verticalRange * 0.48, rotate: 6, duration: 2 })
     .to(shadow, { x: horizontalRange * 0.58, scaleX: 0.42, opacity: 0.22, duration: 2 }, '<')
     // Finish inside the marked upper-right disappearance area.
@@ -619,6 +660,7 @@ function lookAround() {
       ease: 'sine.inOut',
     },
     onComplete: () => {
+      setRobotFacing('right');
       resetPartToBase('head');
       resetPartToBase('body');
       lookAroundTimeline = null;
@@ -627,6 +669,7 @@ function lookAround() {
   });
 
   lookAroundTimeline
+    .call(() => setRobotFacing('left'))
     .to(head, {
       x: headBase.x - 3,
       y: headBase.y,
@@ -644,6 +687,7 @@ function lookAround() {
       0.08
     )
     .to({}, { duration: 0.18 })
+    .call(() => setRobotFacing('right'))
     .to(head, {
       x: headBase.x + 3,
       y: headBase.y,
@@ -1329,6 +1373,7 @@ function handleDebugKeyboard(event) {
   action();
 }
 
+setRobotFacing('right');
 applyRobotConfig();
 ensureFloatTimeline();
 startIdle();
@@ -1342,6 +1387,7 @@ if (DEBUG_ROBOT) {
 }
 
 window.ROBOT_CONFIG = ROBOT_CONFIG;
+window.setRobotFacing = setRobotFacing;
 window.startIdle = startIdle;
 window.stopIdle = stopIdle;
 window.stopAllAnimations = stopAllAnimations;
