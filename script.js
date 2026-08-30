@@ -1,5 +1,5 @@
-const DEBUG_ROBOT = false;
-const ANIMATION_EDITOR_ENABLED = false;
+const DEBUG_ROBOT = true;
+const ANIMATION_EDITOR_ENABLED = true;
 
 const ROBOT_CONFIG = {
   robot: {
