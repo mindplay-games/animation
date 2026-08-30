@@ -75,6 +75,7 @@ body {
   position: absolute;
   display: block;
   max-width: none;
+  object-fit: contain;
   user-select: none;
   pointer-events: none;
   will-change: transform;
@@ -206,6 +207,13 @@ button:active {
   height: 13px;
   background: #00e5ff;
   box-shadow: 0 0 0 2px #111111;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.origin-dot.is-selected:active {
+  cursor: grabbing;
 }
 
 .debug-selected {
