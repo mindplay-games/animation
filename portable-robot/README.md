@@ -10,15 +10,15 @@ portable-robot/
 ├── robot-character.css
 ├── robot-character.js
 └── assets/
-    ├── body.svg
-    ├── head.svg
-    ├── leftleg.svg
-    ├── lhand.svg
-    ├── rhand.svg
-    └── rightleg.svg
+    ├── body.svg / body_turn_left.svg
+    ├── head.svg / head_turn_left.svg
+    ├── leftleg.svg / leftleg_turn_left.svg
+    ├── lhand.svg / lhand_turn_left.svg
+    ├── rhand.svg / rhand_turn_left.svg
+    └── rightleg.svg / rightleg_turn_left.svg
 ```
 
-Keep the six SVG files together. Their filenames, base positions, layer order, sizes, scales, rotations, and transform origins are part of the character assembly.
+Keep all twelve SVG files together. Each direction has its own calibrated positions, layer order, sizes, scales, rotations, and transform origins.
 
 ## Requirements
 
@@ -76,7 +76,7 @@ const robot = await createRobot(mountElement, {
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `assetBaseUrl` | `./assets` | Directory containing the six SVG files. It is resolved relative to the HTML document, not relative to the module. |
+| `assetBaseUrl` | `./assets` | Directory containing the twelve right- and left-facing SVG files. It is resolved relative to the HTML document, not relative to the module. |
 | `autoplay` | `'idle'` | Animation started after assets load. Use `false` or `null` to leave the robot in its static base pose. |
 | `scale` | `1` | Initial visual scale. Use a positive number. |
 | `gsap` | `globalThis.gsap` | A GSAP instance. Pass this explicitly when GSAP is imported through a bundler. |
@@ -110,13 +110,18 @@ Additional controller methods and properties:
 robot.startTalk();       // Same behavior as robot.play('talk').
 robot.stopTalk();        // Stops talking and restores the head and body.
 robot.stop();            // Stops everything and restores the exact base pose.
+robot.setFacing('left'); // Applies the calibrated left artwork, placement, and anchors.
+robot.setFacing('right');// Restores the calibrated right-facing pose.
 robot.setScale(0.75);    // Changes the component scale without changing part geometry.
 console.log(robot.action);
+console.log(robot.facing);
 console.log(robot.element);
 robot.destroy();         // Kills timelines and removes generated markup.
 ```
 
 Do not animate the generated body-part elements from application code while a built-in animation is running. Two timelines changing the same transforms will fight each other.
+
+`setFacing()` accepts only `'left'` or `'right'`. It swaps all six SVGs as one pose and applies that direction's positions and transform origins. The mount dispatches `robot:facingchange` with `{ facing }` whenever this method or a built-in directional animation changes the pose. `stop()` always restores the right-facing pose.
 
 ## Connecting application controls
 
@@ -147,6 +152,10 @@ The mount element dispatches `robot:actionchange` whenever the active action cha
 ```js
 robot.element.addEventListener('robot:actionchange', (event) => {
   console.log('Current action:', event.detail.action);
+});
+
+robot.element.addEventListener('robot:facingchange', (event) => {
+  console.log('Facing:', event.detail.facing);
 });
 ```
 
@@ -258,7 +267,7 @@ Application controls may still call `play()` when the visitor explicitly request
 - Serve the page over HTTP or HTTPS.
 - Load the CSS before initializing the robot.
 - Load or import GSAP before calling `createRobot`.
-- Copy all six SVG assets and provide the correct `assetBaseUrl`.
+- Copy all twelve right- and left-facing SVG assets and provide the correct `assetBaseUrl`.
 - Await `createRobot`.
 - Resize through `scale` or `setScale`, never by editing individual parts.
 - Do not apply application transforms to `.robot-wrapper`, `.robot`, or `.robot-part`.
