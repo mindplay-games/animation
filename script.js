@@ -19,6 +19,7 @@ const ROBOT_CONFIG = {
     left: 95,
     top: 20,
     width: 260,
+    height: 246,
     x: -15,
     y: -107,
     rotate: 1,
@@ -32,6 +33,7 @@ const ROBOT_CONFIG = {
     left: 120,
     top: 150,
     width: 220,
+    height: 218.6,
     x: -8,
     y: -25,
     rotate: 5,
@@ -45,6 +47,7 @@ const ROBOT_CONFIG = {
     left: 45,
     top: 205,
     width: 120,
+    height: 168.8,
     x: 8,
     y: -68,
     rotate: -3,
@@ -58,6 +61,7 @@ const ROBOT_CONFIG = {
     left: 300,
     top: 130,
     width: 120,
+    height: 117.9,
     x: -38,
     y: -53,
     rotate: -6,
@@ -71,6 +75,7 @@ const ROBOT_CONFIG = {
     left: 95,
     top: 330,
     width: 120,
+    height: 211.9,
     x: -12,
     y: -67,
     rotate: 19,
@@ -84,6 +89,7 @@ const ROBOT_CONFIG = {
     left: 240,
     top: 330,
     width: 120,
+    height: 156.1,
     x: -32,
     y: -74,
     rotate: -10,
@@ -106,6 +112,7 @@ const CONFIG_FIELDS = [
   'transformOriginY',
   'zIndex',
   'width',
+  'height',
   'top',
   'left',
 ];
@@ -237,6 +244,7 @@ function applyConfigToPart(partName) {
     styles.left = config.left;
     styles.top = config.top;
     styles.width = config.width;
+    styles.height = config.height;
   }
 
   gsap.set(element, styles);
