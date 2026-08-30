@@ -56,3 +56,15 @@ test('debug editor calibrates and copies left and right placement independently'
   assert.match(script, /ROBOT_LEFT_CONFIG/);
   assert.match(script, /ROBOT_RIGHT_CONFIG/);
 });
+
+test('selected anchor point can be dragged and updates transform-origin fields', () => {
+  const dragHelper = script.match(/function installOriginDotDragging\(dot, partName\) \{[\s\S]*?\n\}/)?.[0] ?? '';
+  const css = readFileSync(`${__dirname}/../style.css`, 'utf8');
+
+  assert.match(script, /installOriginDotDragging\(dot, partName\)/);
+  assert.match(dragHelper, /addEventListener\('pointerdown'/);
+  assert.match(dragHelper, /config\.transformOrigin = joinTransformOrigin/);
+  assert.match(dragHelper, /refreshDebugInputs\(\)/);
+  assert.match(dragHelper, /Math\.max\(0, Math\.min\(100/);
+  assert.match(css, /\.origin-dot\.is-selected \{[\s\S]*?cursor: grab;[\s\S]*?pointer-events: auto/);
+});

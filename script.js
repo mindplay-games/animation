@@ -1306,9 +1306,48 @@ function createOriginDots() {
     dot.title = `${partName} transform origin`;
     robot.appendChild(dot);
     originDots.set(partName, dot);
+    installOriginDotDragging(dot, partName);
   });
 
   updateOriginDots();
+}
+
+function installOriginDotDragging(dot, partName) {
+  dot.addEventListener('pointerdown', (event) => {
+    if (partName !== selectedPart) return;
+
+    event.preventDefault();
+    dot.setPointerCapture(event.pointerId);
+
+    const config = activeRobotConfig()[partName];
+    const startOrigin = splitTransformOrigin(config.transformOrigin);
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const element = partElements[partName];
+    const bounds = element.getBoundingClientRect();
+    const renderedWidth = Math.max(1, bounds.width);
+    const renderedHeight = Math.max(1, bounds.height);
+
+    const move = (moveEvent) => {
+      const originX = Math.max(0, Math.min(100, startOrigin.x + ((moveEvent.clientX - startX) / renderedWidth) * 100));
+      const originY = Math.max(0, Math.min(100, startOrigin.y + ((moveEvent.clientY - startY) / renderedHeight) * 100));
+
+      config.transformOrigin = joinTransformOrigin(Number(originX.toFixed(2)), Number(originY.toFixed(2)));
+      applyConfigToPart(partName);
+      refreshDebugInputs();
+      updateOriginDots();
+    };
+
+    const up = () => {
+      dot.removeEventListener('pointermove', move);
+      dot.removeEventListener('pointerup', up);
+      dot.removeEventListener('pointercancel', up);
+    };
+
+    dot.addEventListener('pointermove', move);
+    dot.addEventListener('pointerup', up);
+    dot.addEventListener('pointercancel', up);
+  });
 }
 
 function getOriginDotPosition(partName) {
@@ -1324,8 +1363,8 @@ function getOriginDotPosition(partName) {
 
   const element = partElements[partName];
   return {
-    left: config.left + config.width * (x / 100),
-    top: config.top + element.offsetHeight * (y / 100),
+    left: config.left + config.x + config.width * (x / 100),
+    top: config.top + config.y + element.offsetHeight * (y / 100),
   };
 }
 
