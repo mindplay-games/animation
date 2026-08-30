@@ -152,9 +152,45 @@ const ROBOT_PART_SOURCES = {
 const ANIMATED_PARTS = PART_NAMES.map((partName) => partElements[partName]);
 const FLOAT_TARGETS = [robotWrapper, '.robot-ground-shadow'];
 const initialConfig = structuredClone(ROBOT_CONFIG);
+const ROBOT_LEFT_CONFIG = {
+  robot: {
+    x: 0, y: 0, rotate: -7, scale: 0.41, scaleX: 1, scaleY: 1,
+    transformOrigin: '50% 56%', zIndex: 0, width: 390, top: 0, left: 0,
+  },
+  head: {
+    left: 129, top: 26, width: 260, height: 246, x: -15, y: -107,
+    rotate: 4, scale: 1.2, scaleX: 1, scaleY: 1,
+    transformOrigin: '46.42% 96.88%', zIndex: 6,
+  },
+  body: {
+    left: 120, top: 150, width: 220, height: 218.6, x: -8, y: -25,
+    rotate: 5, scale: 0.83, scaleX: 1, scaleY: 1,
+    transformOrigin: '50% 50%', zIndex: 3,
+  },
+  leftHand: {
+    left: 260, top: 210, width: 120, height: 168.8, x: 8, y: -68,
+    rotate: -3, scale: 1.11, scaleX: 1, scaleY: 1,
+    transformOrigin: '18.04% 18.75%', zIndex: 3,
+  },
+  rightHand: {
+    left: 119, top: 146, width: 120, height: 138, x: -38, y: -53,
+    rotate: -6, scale: 1.95, scaleX: 1, scaleY: 1,
+    transformOrigin: '86.98% 54.79%', zIndex: 2,
+  },
+  leftLeg: {
+    left: 250, top: 330, width: 120, height: 211.9, x: -12, y: -67,
+    rotate: 19, scale: 1.1, scaleX: 1, scaleY: 1,
+    transformOrigin: '18.53% 14.12%', zIndex: 4,
+  },
+  rightLeg: {
+    left: 122, top: 315, width: 120, height: 156.1, x: -32, y: -74,
+    rotate: -10, scale: 1.37, scaleX: 1, scaleY: 1,
+    transformOrigin: '71.62% 29.85%', zIndex: 1,
+  },
+};
 const ROBOT_FACING_CONFIGS = {
   right: ROBOT_CONFIG,
-  left: structuredClone(ROBOT_CONFIG),
+  left: ROBOT_LEFT_CONFIG,
 };
 const initialFacingConfigs = structuredClone(ROBOT_FACING_CONFIGS);
 const debugInputs = new Map();

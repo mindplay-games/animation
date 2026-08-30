@@ -49,12 +49,22 @@ test('reset restores the normal right-facing artwork', () => {
 test('debug editor calibrates and copies left and right placement independently', () => {
   const debugPanel = script.match(/function createDebugPanel\(\) \{[\s\S]*?\n\}/)?.[0] ?? '';
 
-  assert.match(script, /const ROBOT_FACING_CONFIGS = \{\s*right: ROBOT_CONFIG,\s*left: structuredClone\(ROBOT_CONFIG\)/);
+  assert.match(script, /const ROBOT_FACING_CONFIGS = \{\s*right: ROBOT_CONFIG,\s*left: ROBOT_LEFT_CONFIG/);
   assert.match(debugPanel, /select data-debug-facing/);
   assert.match(debugPanel, /setRobotFacing\(facingSelect\.value\)/);
   assert.match(script, /function activeRobotConfig\(\)/);
   assert.match(script, /ROBOT_LEFT_CONFIG/);
   assert.match(script, /ROBOT_RIGHT_CONFIG/);
+});
+
+test('saved left placement includes the calibrated anchor point for every part', () => {
+  const leftConfig = script.match(/const ROBOT_LEFT_CONFIG = \{[\s\S]*?\n\};/)?.[0] ?? '';
+
+  assert.match(leftConfig, /head: \{[\s\S]*?transformOrigin: '46\.42% 96\.88%'/);
+  assert.match(leftConfig, /leftHand: \{[\s\S]*?transformOrigin: '18\.04% 18\.75%'/);
+  assert.match(leftConfig, /rightHand: \{[\s\S]*?transformOrigin: '86\.98% 54\.79%'/);
+  assert.match(leftConfig, /leftLeg: \{[\s\S]*?transformOrigin: '18\.53% 14\.12%'/);
+  assert.match(leftConfig, /rightLeg: \{[\s\S]*?transformOrigin: '71\.62% 29\.85%'/);
 });
 
 test('selected anchor point can be dragged and updates transform-origin fields', () => {
