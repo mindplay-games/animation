@@ -152,6 +152,11 @@ const ROBOT_PART_SOURCES = {
 const ANIMATED_PARTS = PART_NAMES.map((partName) => partElements[partName]);
 const FLOAT_TARGETS = [robotWrapper, '.robot-ground-shadow'];
 const initialConfig = structuredClone(ROBOT_CONFIG);
+const ROBOT_FACING_CONFIGS = {
+  right: ROBOT_CONFIG,
+  left: structuredClone(ROBOT_CONFIG),
+};
+const initialFacingConfigs = structuredClone(ROBOT_FACING_CONFIGS);
 const debugInputs = new Map();
 const originDots = new Map();
 
@@ -187,6 +192,14 @@ function setRobotFacing(direction) {
 
   robotFacing = direction;
   robot.dataset.facing = direction;
+
+  // Directional placement is applied with the artwork, so the debug editor can
+  // calibrate a genuinely independent pose for each set of SVGs.
+  applyRobotConfig();
+}
+
+function activeRobotConfig() {
+  return ROBOT_FACING_CONFIGS[robotFacing || 'right'];
 }
 
 function splitTransformOrigin(transformOrigin) {
@@ -199,7 +212,7 @@ function joinTransformOrigin(x, y) {
 }
 
 function getDebugValue(partName, field) {
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
 
   if (field === 'transformOriginX') return splitTransformOrigin(config.transformOrigin).x;
   if (field === 'transformOriginY') return splitTransformOrigin(config.transformOrigin).y;
@@ -208,7 +221,7 @@ function getDebugValue(partName, field) {
 }
 
 function setDebugValue(partName, field, value) {
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
   const numericValue = Number(value);
 
   if (field === 'transformOriginX' || field === 'transformOriginY') {
@@ -226,7 +239,7 @@ function setDebugValue(partName, field, value) {
 
 function applyConfigToPart(partName) {
   const element = partElements[partName];
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
   const styles = {
     x: config.x,
     y: config.y,
@@ -1188,6 +1201,13 @@ function createDebugPanel() {
   debugPanel.innerHTML = `
     <h2>Robot Debug Editor</h2>
     <label>
+      Facing
+      <select data-debug-facing>
+        <option value="right">Right artwork</option>
+        <option value="left">Left artwork</option>
+      </select>
+    </label>
+    <label>
       Part
       <select data-debug-part>
         ${PART_NAMES.map((partName) => `<option value="${partName}">${partName}</option>`).join('')}
@@ -1198,7 +1218,7 @@ function createDebugPanel() {
       <button type="button" data-debug-action="pause">Pause animations</button>
       <button type="button" data-debug-action="resume">Resume animations</button>
       <button type="button" data-debug-action="reset">Reset selected part</button>
-      <button type="button" data-debug-action="copy">Copy current config</button>
+      <button type="button" data-debug-action="copy">Copy current facing config</button>
     </div>
     <p class="debug-help">Shortcuts: arrows move 1px, Shift+arrows move 10px, [ / ] rotate 1°, Shift+[ / Shift+] rotate 5°, Tab cycles parts.</p>
   `;
@@ -1207,6 +1227,15 @@ function createDebugPanel() {
   const select = debugPanel.querySelector('[data-debug-part]');
   select.value = selectedPart;
   select.addEventListener('change', () => selectPart(select.value));
+
+  const facingSelect = debugPanel.querySelector('[data-debug-facing]');
+  facingSelect.value = robotFacing;
+  facingSelect.addEventListener('change', () => {
+    setRobotFacing(facingSelect.value);
+    refreshDebugInputs();
+    updateOriginDots();
+    updateSelectedHighlight();
+  });
 
   debugPanel.addEventListener('input', (event) => {
     const input = event.target.closest('[data-debug-field]');
@@ -1283,7 +1312,7 @@ function createOriginDots() {
 }
 
 function getOriginDotPosition(partName) {
-  const config = ROBOT_CONFIG[partName];
+  const config = activeRobotConfig()[partName];
   const { x, y } = splitTransformOrigin(config.transformOrigin);
 
   if (partName === 'robot') {
@@ -1321,7 +1350,7 @@ function updateSelectedHighlight() {
 }
 
 function resetSelectedPart() {
-  ROBOT_CONFIG[selectedPart] = structuredClone(initialConfig[selectedPart]);
+  activeRobotConfig()[selectedPart] = structuredClone(initialFacingConfigs[robotFacing][selectedPart]);
   applyConfigToPart(selectedPart);
   refreshDebugInputs();
   updateOriginDots();
@@ -1329,7 +1358,8 @@ function resetSelectedPart() {
 }
 
 function formatConfigForCopy() {
-  return `const ROBOT_CONFIG = ${JSON.stringify(ROBOT_CONFIG, null, 2).replace(/"([^"\\]+)":/g, '$1:')};`;
+  const configName = robotFacing === 'left' ? 'ROBOT_LEFT_CONFIG' : 'ROBOT_RIGHT_CONFIG';
+  return `const ${configName} = ${JSON.stringify(activeRobotConfig(), null, 2).replace(/"([^"\\]+)":/g, '$1:')};`;
 }
 
 async function copyCurrentConfig() {
@@ -1395,6 +1425,7 @@ if (DEBUG_ROBOT) {
 }
 
 window.ROBOT_CONFIG = ROBOT_CONFIG;
+window.ROBOT_FACING_CONFIGS = ROBOT_FACING_CONFIGS;
 window.setRobotFacing = setRobotFacing;
 window.startIdle = startIdle;
 window.stopIdle = stopIdle;

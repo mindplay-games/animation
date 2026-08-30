@@ -45,3 +45,14 @@ test('reset restores the normal right-facing artwork', () => {
   const stopAll = script.match(/function stopAllAnimations[\s\S]*?\n\}/)?.[0] ?? '';
   assert.match(stopAll, /if \(reset\) \{\s*setRobotFacing\('right'\)/);
 });
+
+test('debug editor calibrates and copies left and right placement independently', () => {
+  const debugPanel = script.match(/function createDebugPanel\(\) \{[\s\S]*?\n\}/)?.[0] ?? '';
+
+  assert.match(script, /const ROBOT_FACING_CONFIGS = \{\s*right: ROBOT_CONFIG,\s*left: structuredClone\(ROBOT_CONFIG\)/);
+  assert.match(debugPanel, /select data-debug-facing/);
+  assert.match(debugPanel, /setRobotFacing\(facingSelect\.value\)/);
+  assert.match(script, /function activeRobotConfig\(\)/);
+  assert.match(script, /ROBOT_LEFT_CONFIG/);
+  assert.match(script, /ROBOT_RIGHT_CONFIG/);
+});
